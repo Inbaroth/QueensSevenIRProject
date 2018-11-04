@@ -11,4 +11,9 @@ public class Parse {
     public Parse() {
         this.termsMap = new TreeMap<>();
     }
+
+
+    public void parser(String docId, String File){
+
+    }
 }

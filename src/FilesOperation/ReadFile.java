@@ -30,7 +30,7 @@ public class ReadFile {
                             line = br.readLine();
                         }
                         else{
-                            //parser.parse(file)
+                            parser.parser("",file);
                             file = "";
                         }
 
