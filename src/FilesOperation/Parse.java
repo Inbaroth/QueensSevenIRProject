@@ -13,7 +13,7 @@ public class Parse {
     }
 
 
-    public void parsing (String File, String fileName, String docId){
+    public void parsing(String docId, String docText, String fileName){
 
     }
 
