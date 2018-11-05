@@ -5,7 +5,7 @@ import java.util.TreeMap;
 
 public class Parse {
 
-    // String - doc Id
+    // String - term
     Map <String, DocumentsHashMap> termsMap;
 
     public Parse() {
@@ -13,7 +13,10 @@ public class Parse {
     }
 
 
-    public void parser(String docId, String File){
+    public void parsing (String File, String fileName, String docId){
 
     }
+
+
+
 }

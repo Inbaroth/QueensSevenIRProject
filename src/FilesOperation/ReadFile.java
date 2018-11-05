@@ -1,11 +1,14 @@
 package FilesOperation;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReadFile {
 
     File folder;
     Parse parser;
+    String filesDirectories;
 
 
     public ReadFile(String path) {
@@ -15,9 +18,11 @@ public class ReadFile {
     }
 
     private void listFilesForFolder(File folder) {
+        List<String> allFiles = new ArrayList<>();
         for (File fileEntry : folder.listFiles()) {
             if (fileEntry.isDirectory()) {
                 listFilesForFolder(fileEntry);
+                System.out.println(fileEntry.getName());
             } else {
                 try {
                     BufferedReader br = new BufferedReader(new FileReader(fileEntry));
@@ -33,9 +38,6 @@ public class ReadFile {
                             parser.parser("",file);
                             file = "";
                         }
-
-
-
                     }
 
 
