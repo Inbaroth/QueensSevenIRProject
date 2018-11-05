@@ -19,7 +19,6 @@ public class ReadFile {
     }
 
     private void listFilesForFolder(File folder) {
-        List<String> allFiles = new ArrayList<>();
         for (File fileEntry : folder.listFiles()) {
             if (fileEntry.isDirectory()) {
                 listFilesForFolder(fileEntry);
@@ -41,7 +40,6 @@ public class ReadFile {
                         }
                         else{
                             docText += line;
-                            allFiles.add(docText);
                             parser.parsing(docId,docText,fileEntry.getName());
                             docText = "";
                             line = br.readLine();
