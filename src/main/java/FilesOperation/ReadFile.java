@@ -1,6 +1,12 @@
 package FilesOperation;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,32 +24,23 @@ public class ReadFile {
     }
 
     private void listFilesForFolder(File folder) {
-        List<String> allFiles = new ArrayList<>();
         for (File fileEntry : folder.listFiles()) {
             if (fileEntry.isDirectory()) {
                 listFilesForFolder(fileEntry);
-                System.out.println(fileEntry.getName());
             } else {
+                Document document = null;
                 try {
-                    BufferedReader br = new BufferedReader(new FileReader(fileEntry));
-                    String line;
-                    String file = "";
-                    line = br.readLine();
-                    while (line != null){
-                        if (!line.equals("</Docs>")){
-                            file += line;
-                            line = br.readLine();
-                        }
-                        else{
-
-                            file = "";
-                        }
-                    }
-
-
+                    document = Jsoup.parse(new String (Files.readAllBytes(fileEntry.toPath())));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                Elements elements = document.getElementsByTag("DOC");
+                for (Element e: elements) {
+                    String docText = e.text();
+                    String docId = e.getElementsByTag("DOCNO").text();
+                    parser.parsing(docId,docText,fileEntry.getName());
+                }
+
             }
         }
     }

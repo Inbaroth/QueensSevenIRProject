@@ -1,5 +1,6 @@
 package FilesOperation;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -92,14 +93,34 @@ public class Parse {
                     }
                 }
 
-
+                Vector<StringBuilder> numberTerm = new Vector<>();
                 //check if it is an Integer like: 0,0 | 0% | $0 | 0.0 | 0/0
-                String numbersRegex = "[$]*[0-9]+[0-9,]*[0-9.]*[0-9%]*[0-9/]*[0-9]*";
+                String numbersRegex = "[$]*[0-9]+[0-9,]*[0-9.]*[0-9/]*[0-9]*[0-9%]*";
                 boolean twoNumsCells = false;
                 if(wordsInDoc[i].matches(numbersRegex)){
                     //if the cell i+1 also part of the number
                     if(isPair && i+1<wordsInDoc.length){
                         wordsInDoc[i + 1] = removeLastComma(wordsInDoc[i+1]);
+                        //handle term like: 2 1/2-2 3/4 | 2 Million-4 Million
+                        //million-22
+                        String sizeMakaf = "(Thousand|Million|Billion|Trillion)[-][0-9]+";
+                        //1/2-22 || 1/2-3/4
+                        String numberMakaf = "[0-9]*[0-9/]+[0-9]+[-][0-9]+[0-9/]*[0-9]*";
+                        if(wordsInDoc[i+1].matches(sizeMakaf) || wordsInDoc[i+1].matches(numberMakaf)){
+                            numberTerm.add(new StringBuilder(wordsInDoc[i]));
+                            int makafIndex = wordsInDoc[i+1].indexOf('-');
+                            String tmp = wordsInDoc[i+1].substring(0,makafIndex);
+                            numberTerm.add(new StringBuilder(tmp));
+                            StringBuilder term1 = parseNumbers(false,docNameFileName,numberTerm,tmp.contains("/"));
+                            tmp = wordsInDoc[i+1].substring(makafIndex+1);
+                            numberTerm.clear();
+                            numberTerm.add(new StringBuilder(tmp));
+                            numberTerm.add(new StringBuilder(wordsInDoc[i+2]));
+                            StringBuilder term2 = parseNumbers(false,docNameFileName,numberTerm,wordsInDoc[i+2].contains("/"));
+                            term1.append("-"+term2.toString());
+                            updateTerm(term1.toString(),docNameFileName);
+                        }
+
                         if (wordsInDoc[i + 1].matches(numbersRegex)) {
                             twoNumsCells = true;
                         }
@@ -109,20 +130,18 @@ public class Parse {
 
                     boolean isDollar = false;
 
-                    Vector<StringBuilder> numberTerm = new Vector<>();
-
-
                     if(wordsInDoc[i].charAt(0)=='$' ) {
                         isDollar = true;
                         numTerm.delete(0,1);
                         numberTerm.add(numTerm);
                     }
                     //$price million/billion/trillion
-                    if(isDollar && wordsInDoc[i+1].matches("(million|billion|trillion)")) {
+                    if(isDollar && wordsInDoc[i+1].matches("(million|billion|trillion)[,]*")) {
                         numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
                         updateTerm(wordsInDoc[i+1].toLowerCase(),docNameFileName);
                         //call to func which deal with prices
-                        parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                        StringBuilder finalTerm = parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                        updateTerm(finalTerm.toString(),docNameFileName);
                         i = i+1;
                         continue;
                     }
@@ -135,39 +154,42 @@ public class Parse {
                     }
 
                     //price Dollars/Dollar/dollar/dollars
-                    if (!isDollar && wordsInDoc[i+1].matches("(Dollars|Dollar|dollar|dollars)")){
+                    if (!isDollar && wordsInDoc[i+1].matches("(Dollars|Dollar|dollar|dollars)[,]*")){
                         numberTerm.add(numTerm);
                         numberTerm.add(new StringBuilder(wordsInDoc[i+1]));
                         //update dic with Dollars/Dollar/dollar/dollars
                         updateTerm(wordsInDoc[i+1].toLowerCase(),docNameFileName);
                         //call to func which deal with prices
-                        parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                        StringBuilder finalTerm = parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                        updateTerm(finalTerm.toString(),docNameFileName);
                         i = i+1;
                         continue;
                     }
 
                     //price m/bn/fraction Dollars/Dollar/dollar/dollars
-                    if (!isDollar && wordsInDoc[i+2].matches("(Dollars|Dollar|dollar|dollars)")){
+                    if (!isDollar && wordsInDoc[i+2].matches("(Dollars|Dollar|dollar|dollars)[,]*")){
                        if(wordsInDoc[i+1].matches("(m|bn)") || twoNumsCells) {
                            numberTerm.add(numTerm);
                            numberTerm.add(new StringBuilder(wordsInDoc[i+1]));
                            //update dic with Dollars/Dollar/dollar/dollars
                            updateTerm(wordsInDoc[i+1].toLowerCase(),docNameFileName);
                            //call to func which deal with prices
-                           parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                           StringBuilder finalTerm = parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                           updateTerm(finalTerm.toString(),docNameFileName);
                            i = i+2;
                            continue;
                        }
                     }
 
                     //price million/billion/trillion U.S. Dollars/Dollar/dollar/dollars
-                    else if (!isDollar && wordsInDoc[i+1].matches("(million|billion|trillion)") && wordsInDoc[i+2].equals("U.S.") && wordsInDoc[i+3].matches("(Dollars|Dollar|dollar|dollars)")){
+                    else if (!isDollar && wordsInDoc[i+1].matches("(million|billion|trillion)[,]*") && wordsInDoc[i+2].equals("U.S.") && wordsInDoc[i+3].matches("(Dollars|Dollar|dollar|dollars)")){
                         numberTerm.add(numTerm);
                         numberTerm.add(new StringBuilder(wordsInDoc[i+1]));
                         //update dic with Dollars/Dollar/dollar/dollars
                         updateTerm(wordsInDoc[i+1].toLowerCase(),docNameFileName);
                         //call to func which deal with prices
-                        parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                        StringBuilder finalTerm = parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                        updateTerm(finalTerm.toString(),docNameFileName);
                         i = i+3;
                         continue;
 
@@ -178,22 +200,27 @@ public class Parse {
                     if(twoNumsCells) {
                         cellNum = i + 1;
                         numTerm.append( " "+wordsInDoc[i+1]);
-                        i = i+1;
                     }
 
                     //if ends with '%'
                     if(wordsInDoc[cellNum].charAt(wordsInDoc[cellNum].length()-1) == '%' ) {
                         String numTermStr = numTerm.toString();
                         updateTerm(numTermStr,docNameFileName );
+                        if (twoNumsCells)
+                            i = i + 1;
                         continue;
                     }
 
                     //if appears percent / percentage / Percent / Percentage /  percents / percentages / Percents / Percentages at the cell after
                     String percentRegex = "(percent|percentage|Percent|Percentage|percents|percentages|Percents|Percentages)";
                     if(wordsInDoc[cellNum+1].matches(percentRegex)){
+                        if(twoNumsCells) {
+                            i = i+1;
+                        }
                         numTerm.append("%");
                         updateTerm(numTerm.toString(),docNameFileName );
                         updateTerm(wordsInDoc[cellNum+1],docNameFileName);
+
                         i = i+1;
                         continue;
                     }
@@ -202,10 +229,22 @@ public class Parse {
                     if(twoNumsCells || wordsInDoc[i+1].matches("(Thousand|Million|Billion|Trillion)")){
                         numberTerm.add(new StringBuilder(wordsInDoc[i+1]));
                     }
-
-                    parseNumbers(false,docNameFileName,numberTerm,twoNumsCells);
-
+                    StringBuilder finalTerm = parseNumbers(false,docNameFileName,numberTerm,twoNumsCells);
+                    updateTerm(finalTerm.toString(),docNameFileName);
+                    if (twoNumsCells)
+                        i = i+1;
                 }
+
+                //handle Word-Word || Word-Word-Word
+                int indxMakaf = wordsInDoc[i].charAt('-');
+                if(indxMakaf!=-1 && !StringUtils.isNumeric(wordsInDoc[i])){
+                    if(!StringUtils.isNumeric(wordsInDoc[i].substring(indxMakaf+1))){
+                        updateTerm(wordsInDoc[i],docNameFileName);
+                    }
+                }
+
+
+
 
 
 
@@ -224,55 +263,68 @@ public class Parse {
         StringBuilder date = new StringBuilder();
         int num = Integer.valueOf(number);
         String month = "";
-        String monthRegerx = "(JANUARY|January|Jan)";
-        if(monthName.matches(monthName)){
-            month = "01";
-        }
-        monthRegerx = "(FEBRUARY|February|Feb)";
-        if(monthName.matches(monthName)){
-            month ="02";
+        while (true) {
+            String monthRegerx = "(JANUARY|January|Jan)";
+            if (monthName.matches(monthRegerx)) {
+                month = "01";
+                break;
+            }
+            monthRegerx = "(FEBRUARY|February|Feb)";
+            if (monthName.matches(monthRegerx)) {
+                month = "02";
+                break;
+            }
+            monthRegerx = "(MARCH|March|Mar)";
+            if (monthName.matches(monthRegerx)) {
+                month = "03";
+                break;
 
-        }
-        monthRegerx = "(MARCH|March|Mar)";
-        if(monthName.matches(monthName)){
-            month ="03";
-
-        }
-        monthRegerx = "(APRIL|April|Apr)";
-        if(monthName.matches(monthName)){
-            month ="04";
-        }
-        monthRegerx = "(MAY|May)";
-        if(monthName.matches(monthName)){
-            month ="05";
-        }
-        monthRegerx = "(JUNE|June)";
-        if(monthName.matches(monthName)){
-            month ="06";
-        }
-        monthRegerx = "(JULY|July)";
-        if(monthName.matches(monthName)){
-            month ="07";
-        }
-        monthRegerx = "(AUGUST|August|Aug)";
-        if(monthName.matches(monthName)){
-            month ="08";
-        }
-        monthRegerx = "(SEPTEMBER|September|Sept)";
-        if(monthName.matches(monthName)){
-            month ="09";
-        }
-        monthRegerx = "(OCTOBER|October|Oct)";
-        if(monthName.matches(monthName)){
-            month ="10";
-        }
-        monthRegerx = "(NOVEMBER|November|Nov)";
-        if(monthName.matches(monthName)){
-            month ="11";
-        }
-        monthRegerx = "(DECEMBER|December|Dec)";
-        if(monthName.matches(monthName)){
-            month ="12";
+            }
+            monthRegerx = "(APRIL|April|Apr)";
+            if (monthName.matches(monthRegerx)) {
+                month = "04";
+                break;
+            }
+            monthRegerx = "(MAY|May)";
+            if (monthName.matches(monthRegerx)) {
+                month = "05";
+                break;
+            }
+            monthRegerx = "(JUNE|June)";
+            if (monthName.matches(monthRegerx)) {
+                month = "06";
+                break;
+            }
+            monthRegerx = "(JULY|July)";
+            if (monthName.matches(monthRegerx)) {
+                month = "07";
+                break;
+            }
+            monthRegerx = "(AUGUST|August|Aug)";
+            if (monthName.matches(monthRegerx)) {
+                month = "08";
+                break;
+            }
+            monthRegerx = "(SEPTEMBER|September|Sept)";
+            if (monthName.matches(monthRegerx)) {
+                month = "09";
+                break;
+            }
+            monthRegerx = "(OCTOBER|October|Oct)";
+            if (monthName.matches(monthRegerx)) {
+                month = "10";
+                break;
+            }
+            monthRegerx = "(NOVEMBER|November|Nov)";
+            if (monthName.matches(monthRegerx)) {
+                month = "11";
+                break;
+            }
+            monthRegerx = "(DECEMBER|December|Dec)";
+            if (monthName.matches(monthRegerx)) {
+                month = "12";
+                break;
+            }
         }
         // year
         if (num > 31){
@@ -302,8 +354,8 @@ public class Parse {
         //check if term not exist in dictionary , add key to TreeMapDic and create it's dic of docs
         if(!termsMap.containsKey(key)){
             DocumentsHashMap documentsHashMap = new DocumentsHashMap();
-            int currentNumOfAppearance = (termsMap.get(key)).get(docNameFileName);
-            documentsHashMap.put(docNameFileName, currentNumOfAppearance+1);
+            //int currentNumOfAppearance = (termsMap.get(key)).get(docNameFileName);
+            documentsHashMap.put(docNameFileName, 1);
             termsMap.put(key.toUpperCase(),documentsHashMap);
             //key exist , update value.
         } else {
@@ -324,17 +376,17 @@ public class Parse {
         String temp = str.toString();
         StringBuilder strTmp = str.delete(0,dotIndex + 1);
         for (int i = 1; i < strTmp.length(); i++) {
-            if (strTmp.charAt(i) != 0) {
+            if (strTmp.charAt(i) != '0') {
                 ans = false;
                 break;
             }
         }
         if (ans){
-            str.insert(0,temp);
-            str = str.delete(dotIndex,temp.length());
+            str.replace(0,str.length(),temp);
+            str.delete(dotIndex,str.length());
             return str;
         }
-        return str.insert(0,temp);
+        return str.replace(0,str.length(),temp);
     }
 
 
@@ -360,26 +412,26 @@ public class Parse {
      * @param numberTerm - vector which contains words after split
      * @param twoNumsCells - if the number is : number fraction
      */
-    private void parseNumbers(boolean isPrice, String docNameFileName , Vector<StringBuilder> numberTerm, boolean twoNumsCells ){
+    private StringBuilder parseNumbers(boolean isPrice, String docNameFileName , Vector<StringBuilder> numberTerm, boolean twoNumsCells ){
       int priceTermSize = numberTerm.size();
       StringBuilder finalTerm =  new StringBuilder();
       while(true) {
           if (!twoNumsCells && priceTermSize >= 2) {
-              if (numberTerm.elementAt(1).toString().matches("m|million|Million")) {
+              if (numberTerm.elementAt(1).toString().matches("(m|million|Million)[,]*")) {
                   //$Price million/m || Price million/m Dollars/U.S. dollars
                   if(isPrice)
                      finalTerm.append(numberTerm.elementAt(0)).append(" M Dollars");
                   //number Million
                   else
                       finalTerm.append(numberTerm.elementAt(0)).append("M");
-              } else if (numberTerm.elementAt(1).toString().matches("bn|billion|Billion")) {
+              } else if (numberTerm.elementAt(1).toString().matches("(bn|billion|Billion)[,]*")) {
                   //$Price billion/bn || Price billion/bn Dollars/U.S. dollars
                   if (isPrice)
                     finalTerm.append(numberTerm.elementAt(0)).append("000 M Dollars");
                   //number Billion
                   else
                       finalTerm.append(numberTerm.elementAt(0)).append("B");
-              } else if (numberTerm.elementAt(1).toString().matches("trillion|Trillion")) {
+              } else if (numberTerm.elementAt(1).toString().matches("(trillion|Trillion)[,]*")) {
                   //$Price trillion || Price trillion Dollars/U.S. dollars
                   if(isPrice)
                     finalTerm.append(numberTerm.elementAt(0)).append("000000 M Dollars");
@@ -387,7 +439,7 @@ public class Parse {
                   else
                       finalTerm.append(numberTerm.elementAt(0)).append("000B");
                   //number Thousand
-              } else if(numberTerm.elementAt(1).toString().matches("Thousand")){
+              } else if(numberTerm.elementAt(1).toString().matches("(Thousand)[,]*")){
                   if(!isPrice)
                       finalTerm.append(numberTerm.elementAt(0)).append("K");
               }
@@ -396,15 +448,19 @@ public class Parse {
           //handle number fraction
           else if(twoNumsCells){
               if(isPrice)
-                finalTerm.append(numberTerm.elementAt(0)).append(numberTerm.elementAt(1)).append(" Dollars");
+                finalTerm.append(numberTerm.elementAt(0)).append(" " + numberTerm.elementAt(1)).append(" Dollars");
               else
-                  finalTerm.append(numberTerm.elementAt(0)).append(numberTerm.elementAt(1));
+                  finalTerm.append(numberTerm.elementAt(0)).append(" " + numberTerm.elementAt(1));
               break;
           }
 
           String tmpNum = numberTerm.elementAt(0).toString();
           tmpNum = tmpNum.replaceAll("," , "");
           //if smaller than million
+          if (!isPrice && tmpNum.length() < 5){
+              finalTerm.append(numberTerm.elementAt(0));
+              break;
+          }
           if (tmpNum.length() < 7) {
               if(isPrice)
                 finalTerm.append(numberTerm.elementAt(0)).append(" Dollars");
@@ -413,6 +469,7 @@ public class Parse {
                   finalTerm.append(tmpNum);
                   finalTerm.insert(finalTerm.length()-3,".");
                   finalTerm = allCharactersZero(finalTerm);
+                  finalTerm.append("K");
               }
               break;
           }
@@ -444,7 +501,7 @@ public class Parse {
               break;
           }
       }
-        updateTerm(finalTerm.toString(),docNameFileName);
+      return finalTerm;
     }
 
     public Map<String, DocumentsHashMap> getTermsMap() {
