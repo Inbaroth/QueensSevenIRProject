@@ -17,6 +17,10 @@ public class ReadFile {
     String filesDirectories;
 
 
+    /**
+     *
+     * @param path
+     */
     public ReadFile(String path) {
         folder = new File(path);
         parser = new Parse();
