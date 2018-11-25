@@ -586,6 +586,14 @@ public class Parse {
 
             String tmpNum = numberTerm.elementAt(0).toString();
             tmpNum = tmpNum.replaceAll("," , "");
+
+            //handle decimal fraction
+            int dotIndex = tmpNum.indexOf('.');
+            //1.5 11.5 111.5
+            // HERE CHECK
+            if(dotIndex!=-1 && dotIndex<4){
+                return new StringBuilder(tmpNum);
+            }
             //if smaller than million
             if (!isPrice && tmpNum.length() < 5){
                 finalTerm.append(numberTerm.elementAt(0));
