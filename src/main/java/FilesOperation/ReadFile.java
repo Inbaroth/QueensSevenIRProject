@@ -14,7 +14,7 @@ public class ReadFile {
 
     File folder;
     Parse parser;
-    String filesDirectories;
+
 
 
     /**
@@ -32,6 +32,7 @@ public class ReadFile {
             if (fileEntry.isDirectory()) {
                 listFilesForFolder(fileEntry);
             } else {
+                System.out.println(fileEntry.getName());
                 Document document = null;
                 try {
                     document = Jsoup.parse(new String (Files.readAllBytes(fileEntry.toPath())));
@@ -40,12 +41,17 @@ public class ReadFile {
                 }
                 Elements elements = document.getElementsByTag("DOC");
                 for (Element e: elements) {
-                    String docText = e.text();
+                    String docText = e.toString();
                     String docId = e.getElementsByTag("DOCNO").text();
                     parser.parsing(docId,docText,fileEntry.getName());
                 }
 
             }
         }
+    }
+
+
+    public Parse getParser() {
+        return parser;
     }
 }
