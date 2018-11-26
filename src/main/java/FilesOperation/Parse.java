@@ -622,9 +622,9 @@ public class Parse {
 
             int dotIndex = tmpNum.indexOf('.');
             // 1.5 11.5 111.5
-            if(dotIndex != -1 && dotIndex <4){
+            if(dotIndex != -1 && dotIndex <4)
                 return new StringBuilder(tmpNum);
-            }
+
             //if smaller than million
             if (!isPrice && tmpNum.length() < 5){
                 finalTerm.append(numberTerm.elementAt(0));

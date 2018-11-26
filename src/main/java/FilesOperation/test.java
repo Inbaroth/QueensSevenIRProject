@@ -14,7 +14,7 @@ public class test{
     public static void main(String[] args) {
         String line = "<TEXT> for 112 Million company, Vacation4U 2 3/4% is preety bad, on 14 MAY, They spent 55 Trillion, While 320 bn Dollars waisted on drugs, BAD Step-By-Step, 2-4 times. From 10 1/2-11,000,122. Between 12 1/2 and 4,000,123. </TEXT>";
         String line1 = "<TEXT> 12.555 kids. Hey 1) he said: hello frein hey. </TEXT>";
-        String line2 = "<TEXT> For 102.78. </TEXT>";
+        String line2 = "<TEXT> For. </TEXT>";
         String text = getText();
         String text1 = getText1();
         String text2 = getText2();
@@ -25,11 +25,11 @@ public class test{
         long startTime = System.nanoTime();
 //        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus");
 //        p.parsing("1",text,"inbar");
-//        p.parsing("1",text1,"inbar1");
+        p.parsing("1",text,"inbar1");
 //        p.parsing("1",text2,"inbar2");
 //        p.parsing("1",text3,"inbar3");
 //        p.parsing("1",text4,"inbar4");
-        p.parsing("1",line2,"inbar5");
+//        p.parsing("1",line2,"inbar5");
         long endTime = System.nanoTime();
         long duration = (endTime - startTime)/1000000;
         System.out.println(duration);
@@ -48,46 +48,88 @@ public class test{
         duration = duration/60000;
         System.out.println(duration);
 
-
-
-
-
     }
 
     private static String getText() {
-        return "<TEXT>\n" +
+        return "<DOC>\n" +
+                "<DOCNO> FBIS3-1337 </DOCNO>\n" +
+                "<HT>    \"drafr058_c_94010\" </HT>\n" +
+                "\n" +
+                "\n" +
+                "<HEADER>\n" +
+                "<AU>   FBIS-AFR-94-058 </AU>\n" +
+                "Document Type:Daily Report \n" +
+                "<DATE1>  23 Mar 1994 </DATE1>\n" +
+                "\n" +
+                "</HEADER>\n" +
+                "\n" +
+                "<F P=100> REPUBLIC OF SOUTH AFRICA </F>\n" +
+                "<H3> <TI>   Joint Ciskei Administrator Finca on Situation </TI></H3>\n" +
+                "<F P=102>  MB2403165894 Johannesburg SABC CCV Television Network in \n" +
+                "English 1730 GMT 23 Mar 94 </F>\n" +
+                "\n" +
+                "<F P=103> MB2403165894 </F>\n" +
+                "<F P=104>  Johannesburg SABC CCV Television Network </F>\n" +
+                "\n" +
+                "\n" +
+                "<TEXT>\n" +
                 "Language: <F P=105> English </F>\n" +
                 "Article Type:BFN \n" +
                 "\n" +
-                "  [Text] More than $1.4 billion in foreign funds came into \n" +
-                "the country as portfolio investments in 1993. Bangko Sentral ng \n" +
-                "Pilipinas [Central Bank of the Philippines] (BSP) statistics \n" +
-                "showed that bulk of the foreign capital was lodged in the \n" +
-                "equities markets. This capital placements fuelled the bull run \n" +
-                "in the domestic stock market in 1993, particularly during the \n" +
-                "later months. \n" +
-                "  Out of the $1 429 billion, about $808.632 million or 56.59 \n" +
-                "percent, was invested in stocks, mostly of commercial and \n" +
-                "industrial listed companies. The balance was invested in banks, \n" +
-                "which included registered bank deposits of non-residents, \n" +
-                "government securities paper, utility and investment and finance \n" +
-                "firms. \n" +
-                "  Of the commercial and industrial classifications, a sizable \n" +
-                "amount, around $468.795 million, went to buy shares of listed \n" +
-                "telecommunications companies. This amount push the shares of \n" +
-                "Philippines Long Distance Co. last year as the highest gainer in \n" +
-                "the stock market. [passage omitted] \n" +
-                "  BSP said that these foreign funds lodged in the local \n" +
-                "bourses \n" +
-                "put the country in the international map as among the emerging \n" +
-                "stock markets in the region. As has been reported, the country's \n" +
-                "stock market registered the best ever performance in the recent \n" +
-                "years with a record high of 150 percent growth in 1993. Trading \n" +
-                "in both bourses were heavy particularly during the last days of \n" +
-                "December, posting at one time the highest turnover of P4.26 \n" +
-                "billion [Philippine pesos]. \n" +
+                "<F P=106> [Telephone interview with newly appointed joint Ciskei </F>\n" +
+                "administrator Reverend Bongani Finca by CCV TV announcer Astrid \n" +
+                "Ascar -- live] \n" +
+                "  [Text] [Ascar] Good evening, Reverend Finca. Welcome to \n" +
+                "Newsline. \n" +
+                "  [Finca] Good evening. \n" +
+                "  [Ascar] As I asked Mr. Goosen earlier, plans for the \n" +
+                "immediate future. I'd like to ask you again what do you think \n" +
+                "can be done to address the concerns of the civil servants as \n" +
+                "regards their pensions? \n" +
+                "  [Finca] There is a task force already set up by the TEC \n" +
+                "[Transitional Executive Council] for that purpose and I am led \n" +
+                "to believe that that task force is already addressing that \n" +
+                "issue. We, as the joint administrators, will be lending our \n" +
+                "support to what the task force is going to be doing. \n" +
+                "  [Ascar] Rev. Finca, do you think there are any similarities \n" +
+                "between the situation in the Ciskei and the situation in \n" +
+                "Bophuthatswana not too long ago? \n" +
+                "  [Finca] There are similarities, and there are, of course, \n" +
+                "differences. The similarities lie in the fact that there is a \n" +
+                "popular uprising of dissatisfaction with these Bantustan \n" +
+                "dictators. The similarities are in the fact that in Ciskei there \n" +
+                "has been, what I believe, an acceptance by Brigadier Gqozo that \n" +
+                "he can no longer control the situation and has voluntarily \n" +
+                "stepped down. \n" +
+                "  [Ascar] Do you not see a pattern emerging in the independent \n" +
+                "states? Is there not a fear that this could spill over to other \n" +
+                "areas? \n" +
+                "  [Finca] I don't know whose fear that is. Is that the fear of \n" +
+                "those who are in authority or is that the fear of the people? I \n" +
+                "think there is a general trend developing in our country that \n" +
+                "democracy has to be dictated to by the people on the ground. \n" +
+                "  [Ascar] Rev. Finca, would you corroborate what Mr. Goosen \n" +
+                "said, that the Brigadier is in fact not under house arrest? \n" +
+                "  [Finca] I'm not as conversant with the facts of what has \n" +
+                "been \n" +
+                "happening today as my colleague Mr. Goosen is. I've just come \n" +
+                "in this morning from Johannesburg. I've been attending a \n" +
+                "meeting there, so I believe that Mr. Goosen's version of what is \n" +
+                "happening will by and large be correct. He has been closer to \n" +
+                "the situation than myself, for today. \n" +
+                "  [Ascar] You have been in the Ciskei today. Are you able to \n" +
+                "ascertain whether there are indeed Ciskeian Defense Force \n" +
+                "loyalists who are still supporting the brigadier? \n" +
+                "  [Finca] I am not able to comment on that. I'll be going to \n" +
+                "Bisho for the first time tomorrow morning. I came in, as I say, \n" +
+                "from Johannesburg this morning, and I have never been to Bisho. \n" +
+                "  [Ascar] Rev. Finca, we thank you for your participation. \n" +
+                "Thanks for joining us. \n" +
+                "  [Finca] Thank you. \n" +
                 "\n" +
-                "</TEXT>\n";
+                "</TEXT>\n" +
+                "\n" +
+                "</DOC>\n";
     }
     private static String getText1(){
         return "<TEXT>\n" +
