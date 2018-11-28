@@ -39,9 +39,11 @@ public class ReadFile {
                 for (Element e: elements) {
                     String docText = e.toString();
                     String docId = e.getElementsByTag("DOCNO").text();
-                    parser.parsing(docId,docText,fileEntry.getName());
+                    parser.parsing(docId,docText,fileEntry.getName(),counter);
                 }
-
+                counter++;
+                if (counter == 50)
+                    counter = 0;
             }
         }
     }

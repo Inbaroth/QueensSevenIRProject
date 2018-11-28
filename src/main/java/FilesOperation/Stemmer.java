@@ -25,6 +25,39 @@ public class Stemmer {
     }
 
     /**
+     *
+     * @param word
+     * @return
+     */
+    public String stemTerm(String word){
+        setTerm(word);
+        stem();
+        return getTerm();
+    }
+
+    /**
+     *
+     * @return
+     */
+    private String getTerm() {
+        return String.copyValueOf(b,0,i_end);
+    }
+
+    /**
+     *
+     * @param word
+     */
+    private void setTerm(String word) {
+        i = word.length();
+        char[] new_b = new char[i];
+        for (int c = 0; c < i; c++)
+            new_b[c] = word.charAt(c);
+
+        b = new_b;
+
+    }
+
+    /**
      * Add a character to the word being stemmed.  When you are finished
      * adding characters, you can call stem(void) to stem the word.
      */
