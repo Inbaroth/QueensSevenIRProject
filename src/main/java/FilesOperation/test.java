@@ -23,8 +23,10 @@ public class test{
         String text5 = getText5();
         Parse p = new Parse();
         long startTime = System.nanoTime();
-        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus");
-//        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396022");
+//        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus");
+          ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396010");
+//          ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396011");
+//          ReadFile reader2 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396012");
 //        p.parsing("1",text,"inbar");
 //        p.parsing("1",text,"inbar1");
 //        p.parsing("1",text2,"inbar2");
@@ -36,19 +38,20 @@ public class test{
         System.out.println(duration);
         System.out.println("*******************");
 
+        reader.getParser().moveToIndexer();
 
-        Map<String, HashMap<String,Integer>> map = reader.getParser().getTermsMap();
+//        Map<String, HashMap<DocumentDetails,Integer>> map = reader.getParser().getTermsMap();
 //        Map<String, HashMap<String,Integer>> map = p.getTermsMap();
 
-        for (Map.Entry<String,HashMap<String,Integer>> entry:map.entrySet()) {
+/*        for (Map.Entry<String,HashMap<String,Integer>> entry:map.entrySet()) {
             System.out.print(entry.getKey()+ ": ");
                 for (Map.Entry<String, Integer> doc : entry.getValue().entrySet()) {
                     System.out.print("<" + doc.getKey() + " , " + doc.getValue() + "> -> ");
                 }
                 System.out.println();
-        }
+        }*/
         duration = duration/60000;
-        System.out.println(duration);
+        System.out.println(duration + " min");
 
     }
 

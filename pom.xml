@@ -35,6 +35,13 @@
             <artifactId>jsoup</artifactId>
             <version>1.8.3</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.code.externalsortinginjava/externalsortinginjava -->
+        <dependency>
+            <groupId>com.google.code.externalsortinginjava</groupId>
+            <artifactId>externalsortinginjava</artifactId>
+            <version>0.2.5</version>
+        </dependency>
+
 
     </dependencies>
 
