@@ -1,19 +1,26 @@
 package FilesOperation;
 
 import InvertedIndex.Indexer;
+import com.sun.xml.internal.bind.v2.util.QNameMap;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.tartarus.snowball.SnowballProgram;
+import org.tartarus.snowball.SnowballStemmer;
 
 import java.io.*;
+import java.security.KeyStore;
 import java.text.BreakIterator;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Parse {
 
     // String - term
     Map <String, HashMap<DocumentDetails,Integer>> termsMap;
     Indexer indexer;
+    boolean isStemming;
+    Stemmer stemmer;
     HashSet<String> stopWords;
     HashMap<String,String> monthDictionary;
     HashMap<String,String> numbersDictionary;
@@ -26,11 +33,14 @@ public class Parse {
     /**
      * Constructor
      */
-    public Parse() {
-        this.termsMap = new HashMap<>();
+    public Parse(boolean isStemming) {
+        this.termsMap = new ConcurrentHashMap<>();
         this.indexer = new Indexer();
+        this.isStemming = isStemming;
+        if (isStemming)
+            stemmer = new Stemmer();
         this.stopWords = new HashSet<>();
-        // create and fill month dictionary
+        // create and fill dictionaries
         this.monthDictionary = new HashMap<>();
         this.numbersDictionary = new HashMap<>();
         this.pricesDictionary = new HashMap<>();
@@ -539,7 +549,7 @@ public class Parse {
 
                 //WORD starts with LOWER and exist in dic with UPPER, update dic with LOWER CASE of WORD and update key to LOWER
                 if (!Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(wordsInDoc[i].toUpperCase())) {
-                    termsMap.put(wordsInDoc[i], termsMap.get(wordsInDoc[i].toUpperCase()));
+                    termsMap.get(wordsInDoc[i]).putAll(termsMap.get(wordsInDoc[i].toUpperCase()));
                     int currentNumOfAppearance = 0;
                     if (termsMap.get(wordsInDoc[i]).containsKey(documentDetailes))
                         currentNumOfAppearance = (termsMap.get(wordsInDoc[i])).get(documentDetailes);
@@ -854,7 +864,26 @@ public class Parse {
      */
     public void moveToIndexer() {
         // need to do stem
+        if (isStemming) {
+            Iterator it = termsMap.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry entry = (Map.Entry) it.next();
+                String key = (String) entry.getKey();
+                // stem the key using porter stemmer algorithm
+                String stem = stemmer.stemTerm(key);
+                // if the stem of key exist in the terms dictionary, merge the key values to stem, and remove key from dictionary
+                if (!key.equals(stem)){
+                    if (termsMap.containsKey(stem)) {
+                        termsMap.get(stem).putAll(termsMap.get(key));
+                    }
+                    else if (!termsMap.containsKey(stem)){
+                        termsMap.put(stem,termsMap.get(key));
+                    }
+                    it.remove();
+                }
 
+            }
+        }
         indexer.buildIndex(this.termsMap);
     }
 

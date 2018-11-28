@@ -23,9 +23,9 @@ public class ReadFile extends Thread{
      *
      * @param path
      */
-    public ReadFile(String path) {
+    public ReadFile(String path, boolean isStemming) {
         folder = new File(path);
-        parser = new Parse();
+        parser = new Parse(isStemming);
         listFilesForFolder(folder);
     }
 
