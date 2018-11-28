@@ -4,23 +4,37 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import java.io.*;
 import java.text.BreakIterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Vector;
+import java.util.*;
 
 public class Parse {
 
     // String - term
-    Map <String, DocumentsHashMap> termsMap;
+    Map <String, HashMap<String,Integer>> termsMap;
+    HashSet<String> stopWords;
 
     public Parse() {
         this.termsMap = new TreeMap<>();
+        this.stopWords = new HashSet<>();
+        File file = new File("src/main/resources/stop words.txt");
+        try {
+            BufferedReader bf = new BufferedReader(new FileReader(file));
+            String line = bf.readLine();
+            while (line != null){
+                stopWords.add(line);
+                line = bf.readLine();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
-    public void parsing( String docId, String docText, String fileName){
+    public void parsing(String docId, String docText, String fileName){
+//        System.out.println(fileName);
         //values , key + value of DocumentsHashMap
         String docNameFileName = docId + "_" + fileName;
         //take only text between <Text> and </Text>
@@ -37,11 +51,18 @@ public class Parse {
     }
 
     private void parsingLine(String docId, String docLine, String docNameFileName){
-
+        String punctuations = ",.";
         //split all words by whitespace into array of words
+        //docLine = docLine.replaceAll("[():?!]","");
         String [] wordsInDoc = docLine.trim().split("\\s+");
-        wordsInDoc[wordsInDoc.length-1] = wordsInDoc[wordsInDoc.length-1].substring(0,wordsInDoc[wordsInDoc.length-1].length()-1);
+        if (wordsInDoc.length > 1)
+            wordsInDoc[wordsInDoc.length-1] = wordsInDoc[wordsInDoc.length-1].substring(0,wordsInDoc[wordsInDoc.length-1].length()-1);
         for (int i = 0; i < wordsInDoc.length; i++) {
+
+            if (wordsInDoc[i].length() == 0 || punctuations.contains(wordsInDoc[i]))
+                continue;
+            if (stopWords.contains(wordsInDoc[i]) && !wordsInDoc[i].equals("between"))
+                continue;
 
             //check if it's a tag symbol city: <F P=104>
             if( (i+1)<wordsInDoc.length && wordsInDoc[i].equals("<F") && wordsInDoc[i+1].equals("P=104>")){
@@ -57,7 +78,8 @@ public class Parse {
                 wordsInDoc[i] = wordsInDoc[i].substring(0,wordsInDoc[i].length()-1);
             }
             //if it is NOT a tag , doesn't starts with '<'
-            if(!((wordsInDoc[i].charAt(0)== '<') || wordsInDoc[i].charAt(wordsInDoc[i].length()-1) == '>')){
+            //if(!((wordsInDoc[i].charAt(0)== '<') || wordsInDoc[i].charAt(wordsInDoc[i].length()-1) == '>')){
+            if(!(wordsInDoc[i].contains("<"))){
 
                 //regex for terms like: 0,0 | 0% | $0 | 0.0 | 0/0
                 String numbersRegex = "[$]*[0-9]+[0-9,]*[0-9.]*[0-9/]*[0-9]*[0-9%]*";
@@ -122,7 +144,7 @@ public class Parse {
                 if(wordsInDoc[i].matches(monthRegex)){
                     //insert to dic also Month name by itself
                     updateTerm(wordsInDoc[i], docNameFileName);
-                    if(isPair) {
+                    if(i+1 < wordsInDoc.length && isPair) {
                         wordsInDoc[i+1] = wordsInDoc[i+1].replaceAll(",", "");
                         if (i + 1 < wordsInDoc.length && wordsInDoc[i + 1].matches(numRegex)) {
                             //change to date format: MM-DD and insert to dic
@@ -202,6 +224,7 @@ public class Parse {
 
                     if(wordsInDoc[i].charAt(0)=='$' ) {
                         isDollar = true;
+                        twoNumsCells = false;
                         numTerm.delete(0,1);
                         numberTerm.add(numTerm);
                     }
@@ -220,7 +243,8 @@ public class Parse {
                     //$price
                     if(isDollar){
                         //call to func which deal with prices
-                        parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                        StringBuilder finalTerm = parseNumbers(true,docNameFileName,numberTerm,twoNumsCells);
+                        updateTerm(finalTerm.toString(),docNameFileName);
                         numberTerm.clear();
                         continue;
                     }
@@ -256,7 +280,7 @@ public class Parse {
                     }
 
                     //price million/billion/trillion U.S. Dollars/Dollar/dollar/dollars
-                    else if (i+1<wordsInDoc.length && !isDollar && wordsInDoc[i+1].matches("(million|billion|trillion)[,]*") && wordsInDoc[i+2].equals("U.S.") && wordsInDoc[i+3].matches("(Dollars|Dollar|dollar|dollars)")){
+                    else if (i+3<wordsInDoc.length && !isDollar && wordsInDoc[i+1].matches("(million|billion|trillion)[,]*") && wordsInDoc[i+2].equals("U.S.") && wordsInDoc[i+3].matches("(Dollars|Dollar|dollar|dollars)")){
                         numberTerm.add(numTerm);
                         numberTerm.add(new StringBuilder(wordsInDoc[i+1]));
                         //update dic with Dollars/Dollar/dollar/dollars
@@ -288,7 +312,7 @@ public class Parse {
 
                     //if appears percent / percentage / Percent / Percentage /  percents / percentages / Percents / Percentages at the cell after
                     String percentRegex = "(percent|percentage|Percent|Percentage|percents|percentages|Percents|Percentages)";
-                    if(wordsInDoc[cellNum+1].matches(percentRegex)){
+                    if(cellNum + 1 < wordsInDoc.length && wordsInDoc[cellNum+1].matches(percentRegex)){
                         if(twoNumsCells) {
                             i = i+1;
                         }
@@ -301,7 +325,7 @@ public class Parse {
                     }
 
                     numberTerm.add(new StringBuilder(wordsInDoc[i]));
-                    if(twoNumsCells || wordsInDoc[i+1].matches(numberSize)){
+                    if(twoNumsCells || (i+1 < wordsInDoc.length && wordsInDoc[i+1].matches(numberSize))){
                         numberTerm.add(new StringBuilder(wordsInDoc[i+1]));
                     }
                     StringBuilder finalTerm = parseNumbers(false,docNameFileName,numberTerm,twoNumsCells);
@@ -333,7 +357,7 @@ public class Parse {
                         if(afterMakaf.matches(numbersRegex)) {
                             numberTerm.add(new StringBuilder(afterMakaf));
                             //1-1 1/2 || 1-2 Million
-                            if (i + 1 < wordsInDoc.length && wordsInDoc[i + 1].matches(numbersRegex) || wordsInDoc[i + 1].matches(numberSize)) {
+                            if (i + 1 < wordsInDoc.length && (wordsInDoc[i + 1].matches(numbersRegex) || wordsInDoc[i + 1].matches(numberSize))) {
                                 numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
                                 twoNumsCells = true;
                                 i= i+1;
@@ -356,8 +380,11 @@ public class Parse {
                 }
 
                 // the word doesn't exist in the dictionary starting with LOWER and UPPER
-                if(!termsMap.containsKey(wordsInDoc[i]) && !termsMap.containsKey(wordsInDoc[i].toLowerCase())){
-                    updateTerm(wordsInDoc[i],docNameFileName);
+                if(!termsMap.containsKey(wordsInDoc[i].toUpperCase()) && !termsMap.containsKey(wordsInDoc[i].toLowerCase())){
+                    if (Character.isUpperCase(wordsInDoc[i].charAt(0)))
+                        updateTerm(wordsInDoc[i].toUpperCase(),docNameFileName);
+                    else
+                        updateTerm(wordsInDoc[i],docNameFileName);
                     continue;
                 }
                 //WORD starts with UPPER and exist in dic with LOWER, update dic with LOWER CASE of WORD
@@ -367,13 +394,13 @@ public class Parse {
                 }
 
                 //WORD starts with LOWER and exist in dic with UPPER, update dic with LOWER CASE of WORD and update key to LOWER
-                //change a word which starts with lower case to same word now starts with upper case
-                StringBuilder startWithUpp=new StringBuilder("" + Character.toUpperCase(wordsInDoc[i].charAt(0))).append(new StringBuilder(wordsInDoc[i].substring(1)));
-                if(!Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(startWithUpp.toString())){
-                    termsMap.put(wordsInDoc[i], termsMap.get(startWithUpp.toString()));
-                    int currentNumOfAppearance = (termsMap.get(wordsInDoc[i])).get(docNameFileName);
+                if(!Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(wordsInDoc[i].toUpperCase())){
+                    termsMap.put(wordsInDoc[i], termsMap.get(wordsInDoc[i].toUpperCase()));
+                    int currentNumOfAppearance = 0 ;
+                    if (termsMap.get(wordsInDoc[i]).containsKey(docNameFileName))
+                        currentNumOfAppearance = (termsMap.get(wordsInDoc[i])).get(docNameFileName);
                     (termsMap.get(wordsInDoc[i])).put(docNameFileName,currentNumOfAppearance+1);
-                    termsMap.remove(startWithUpp.toString());
+                    termsMap.remove(wordsInDoc[i].toUpperCase());
                     continue;
                 }
                 //covers case of starts only with UPPER
@@ -483,12 +510,14 @@ public class Parse {
     private void updateTerm(String key, String docNameFileName ){
         //check if term not exist in dictionary , add key to TreeMapDic and create it's dic of docs
         if(!termsMap.containsKey(key)){
-            DocumentsHashMap documentsHashMap = new DocumentsHashMap();
+            HashMap<String,Integer> documentsHashMap = new HashMap<>();
             documentsHashMap.put(docNameFileName, 1);
-            termsMap.put(key.toUpperCase(),documentsHashMap);
+            termsMap.put(key,documentsHashMap);
             //key exist , update value.
         } else {
-            int currentNumOfAppearance = (termsMap.get(key)).get(docNameFileName);
+            int currentNumOfAppearance = 0;
+            if (termsMap.get(key).containsKey(docNameFileName))
+                currentNumOfAppearance = (termsMap.get(key)).get(docNameFileName);
             (termsMap.get(key)).put(docNameFileName,currentNumOfAppearance+1);
         }
     }
@@ -529,7 +558,7 @@ public class Parse {
      * @return
      */
     private String removeLastComma(String word){
-        if(word.charAt(word.length()-1)== ',') {
+        if(word.contains(",") && word.charAt(word.length()-1)== ',') {
             word= word.substring(0,word.length()-1);
         }
         return word;
@@ -577,6 +606,10 @@ public class Parse {
             }
             //handle number fraction
             else if(twoNumsCells){
+/*                for (StringBuilder s:numberTerm) {
+                    System.out.print(s + "-");
+                }*/
+//                System.out.println();
                 if(isPrice)
                     finalTerm.append(numberTerm.elementAt(0)).append(" " + numberTerm.elementAt(1)).append(" Dollars");
                 else
@@ -587,11 +620,9 @@ public class Parse {
             String tmpNum = numberTerm.elementAt(0).toString();
             tmpNum = tmpNum.replaceAll("," , "");
 
-            //handle decimal fraction
             int dotIndex = tmpNum.indexOf('.');
-            //1.5 11.5 111.5
-            // HERE CHECK
-            if(dotIndex!=-1 && dotIndex<4){
+            // 1.5 11.5 111.5
+            if(dotIndex != -1 && dotIndex <4){
                 return new StringBuilder(tmpNum);
             }
             //if smaller than million
@@ -603,11 +634,21 @@ public class Parse {
                 if(isPrice)
                     finalTerm.append(numberTerm.elementAt(0)).append(" Dollars");
                 else{
-                    tmpNum = tmpNum.replaceAll("\\." , "");
-                    finalTerm.append(tmpNum);
-                    finalTerm.insert(finalTerm.length()-3,".");
-                    finalTerm = allCharactersZero(finalTerm);
-                    finalTerm.append("K");
+                    dotIndex = tmpNum.indexOf(".");
+                    if (tmpNum.contains(".") && dotIndex < 5){
+                        finalTerm.append(tmpNum);
+                    }
+                    else{
+                        tmpNum = tmpNum.replaceAll("\\." , "");
+                        finalTerm.append(tmpNum);
+                        if (dotIndex == -1)
+                            finalTerm.insert(finalTerm.length()-3,".");
+                        else
+                            finalTerm.insert(dotIndex-3,".");
+                        finalTerm = allCharactersZero(finalTerm);
+                        finalTerm.append("K");
+                    }
+
                 }
                 break;
             }
@@ -642,9 +683,12 @@ public class Parse {
         return finalTerm;
     }
 
-    public Map<String, DocumentsHashMap> getTermsMap() {
+
+
+    public Map<String, HashMap<String,Integer>> getTermsMap() {
         return termsMap;
     }
 
-
 }
+
+
