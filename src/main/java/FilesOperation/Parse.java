@@ -34,6 +34,7 @@ public class Parse {
     int maxTermFrequency = 0;
     int numberOfDistinctWords = 0;
     ThreadPoolExecutor threadPoolExecutor;
+    int numberOfDocuments = 0;
 
 
     /**
@@ -161,6 +162,7 @@ public class Parse {
      */
     public void parsing(String docId, String docText, String fileName, int counter){
         // every 50 files, move all the data in the term map into indexer and reset the map
+        numberOfDocuments++;
         if (counter == 100) {
             ReadFile.counter = 0;
             moveToIndexer();
@@ -956,6 +958,9 @@ public class Parse {
         return indexer;
     }
 
+    public int getNumberOfDocuments() {
+        return numberOfDocuments;
+    }
 
     public void notifyDone() {
         moveToIndexer();
