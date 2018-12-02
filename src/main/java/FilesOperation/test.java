@@ -21,10 +21,10 @@ public class test{
         String text3 = getText3();
         String text4 = getText4();
         String text5 = getText5();
-        Parse p = new Parse();
+      // Parse p = new Parse();
         long startTime = System.nanoTime();
 //        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus");
-          ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396010");
+       //   ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396010");
 //          ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396011");
 //          ReadFile reader2 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396012");
 //        p.parsing("1",text,"inbar");
@@ -38,7 +38,7 @@ public class test{
         System.out.println(duration);
         System.out.println("*******************");
 
-        reader.getParser().moveToIndexer();
+      //  reader.getParser().moveToIndexer();
 
 //        Map<String, HashMap<DocumentDetails,Integer>> map = reader.getParser().getTermsMap();
 //        Map<String, HashMap<String,Integer>> map = p.getTermsMap();
