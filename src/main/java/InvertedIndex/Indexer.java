@@ -352,10 +352,25 @@ public class Indexer {
         }
     }
 
+    /**
+     *
+     */
     public void reset(){
         for(File file: folder.listFiles())
             if (!file.isDirectory())
                 file.delete();
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String toString(){
+        StringBuilder ans = new StringBuilder(" ");
+        for (Map.Entry<String,TermDetails> entry: dictionary.entrySet()){
+            ans.append(entry.getKey() + ", " + entry.getValue().getNumberOfAppearance() + "\n");
+        }
+        return ans.toString();
     }
 
 
