@@ -1,7 +1,6 @@
-package sample;
+package View;
 
 import java.io.File;
-import java.util.StringTokenizer;
 
 public class test {
 
