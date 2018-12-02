@@ -19,7 +19,7 @@ public class test{
         long startTime = System.nanoTime();
 //        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus",false);
 //          ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FT941",false);
-//          ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus2",false);
+          ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus2","src/main/resources",false);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime)/1000000;
         System.out.println("*******************");
@@ -37,6 +37,7 @@ public class test{
         duration = duration/60000;
         System.out.println(duration + " min");
 //        System.out.println("Number of tokens: " + reader.getParser().getTermsMap().size());
+        System.out.println(reader1.getParser().getIndexer().dictionary.size());
 
 
     }

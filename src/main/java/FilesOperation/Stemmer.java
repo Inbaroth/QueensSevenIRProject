@@ -33,7 +33,7 @@ public class Stemmer {
      * @param termsMap
      * @return
      */
-    public void stemMap(Map<String, HashMap<DocumentDetails,Integer>> termsMap){
+    public void stemMap(ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails,Integer>> termsMap){
         Iterator it = termsMap.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();

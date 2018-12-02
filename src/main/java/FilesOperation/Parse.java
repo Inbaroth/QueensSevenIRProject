@@ -1,12 +1,18 @@
 package FilesOperation;
 
 import InvertedIndex.Indexer;
+import javafx.beans.property.ListProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import java.io.*;
 import java.text.BreakIterator;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -17,15 +23,14 @@ public class Parse {
     Stemmer stemmer;
 
     // String - term
-    HashMap <String, HashMap<DocumentDetails,Integer>> termsMap;
+    ConcurrentHashMap <String, ConcurrentHashMap<DocumentDetails,Integer>> termsMap;
     HashSet<String> stopWords;
-    HashSet<String> corpusLanguages;
+    ArrayList<String> corpusLanguages;
     HashMap<String,String> monthDictionary;
     HashMap<String,String> numbersDictionary;
     HashMap<String,String> pricesDictionary;
     HashSet<String> precentSet;
     HashSet<String> dollarSet;
-
     int maxTermFrequency = 0;
     int numberOfDistinctWords = 0;
     ThreadPoolExecutor threadPoolExecutor;
@@ -35,13 +40,15 @@ public class Parse {
      * Constructor
      */
     public Parse(String pathToSaveIndex, boolean isStemming) {
-        this.termsMap = new HashMap<>();
+        this.termsMap = new ConcurrentHashMap<>();
         this.indexer = new Indexer(pathToSaveIndex);
+        //this.documentList = new SortedList<String>(Comparator);
         this.isStemming = isStemming;
         if (isStemming)
             stemmer = new Stemmer();
         this.stopWords = new HashSet<>();
-        corpusLanguages = new HashSet<>();
+
+        this.corpusLanguages = new ArrayList<>();
         // create and fill dictionaries
         this.monthDictionary = new HashMap<>();
         this.numbersDictionary = new HashMap<>();
@@ -157,7 +164,7 @@ public class Parse {
         if (counter == 100) {
             ReadFile.counter = 0;
             moveToIndexer();
-            this.termsMap = new HashMap<>();
+            this.termsMap = new ConcurrentHashMap<>();
         }
         //values , key + value of DocumentsHashMap
         DocumentDetails documentDetails = new DocumentDetails(docId,fileName);
@@ -269,7 +276,7 @@ public class Parse {
 
 
             // check if the string in wordInDoc[i] contains only letters
-            if (!monthDictionary.containsKey(wordsInDoc[i]) && isAlpha(wordsInDoc[i])){
+            if (!monthDictionary.containsKey(wordsInDoc[i]) && !wordsInDoc.equals("between") && isAlpha(wordsInDoc[i])){
                 // the word doesn't exist in the dictionary starting with LOWER and UPPER
                 if (!termsMap.containsKey(wordsInDoc[i].toUpperCase()) && !termsMap.containsKey(wordsInDoc[i].toLowerCase())) {
                     if (Character.isUpperCase(wordsInDoc[i].charAt(0)))
@@ -831,7 +838,7 @@ public class Parse {
     private void updateTerm(String key, DocumentDetails documentDetails){
         //check if term not exist in dictionary , add key to TreeMapDic and create it's dic of docs
         if(!termsMap.containsKey(key)){
-            HashMap<DocumentDetails,Integer> documentsHashMap = new HashMap<>();
+            ConcurrentHashMap<DocumentDetails,Integer> documentsHashMap = new ConcurrentHashMap<>();
             documentsHashMap.put(documentDetails, 1);
             termsMap.put(key,documentsHashMap);
             numberOfDistinctWords++;
@@ -851,7 +858,7 @@ public class Parse {
      *
      * @return the termsMap dictionary
      */
-    public Map<String, HashMap<DocumentDetails,Integer>> getTermsMap() {
+    public ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails,Integer>> getTermsMap() {
         return termsMap;
     }
 
@@ -918,6 +925,15 @@ public class Parse {
     }
 
     /**
+     *
+     * @return the language array list sorted
+     */
+    public ArrayList<String> getCorpusLanguages() {
+        Collections.sort(corpusLanguages);
+        return corpusLanguages;
+    }
+
+    /**
      * This function send the terms map dictionary to the Indexer object for continuous progress
      */
     public synchronized void moveToIndexer() {
@@ -925,18 +941,24 @@ public class Parse {
         if (isStemming) {
             stemmer.stemMap(this.termsMap);
         }
-//        threadPoolExecutor.execute(new RunnableBuildIndex());
+        threadPoolExecutor.execute(new RunnableBuildIndex());
 /*        Thread thread = new Thread(new RunnableBuildIndex());
         thread.start();*/
-        indexer.buildIndex(termsMap);
+        //indexer.buildIndex(termsMap);
 
     }
 
+    /**
+     *
+     * @return
+     */
     public Indexer getIndexer() {
         return indexer;
     }
 
+
     public void notifyDone() {
+        moveToIndexer();
         indexer.mergePostingFile();
     }
 
@@ -944,7 +966,8 @@ public class Parse {
 
         @Override
         public void run() {
-            indexer.buildIndex(termsMap);
+            ConcurrentHashMap <String, ConcurrentHashMap<DocumentDetails,Integer>> terms = new ConcurrentHashMap<>(termsMap);
+            indexer.buildIndex(terms);
         }
     }
 
