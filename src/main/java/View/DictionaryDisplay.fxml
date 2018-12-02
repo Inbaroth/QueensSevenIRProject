@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+
+<AnchorPane prefHeight="486.0" prefWidth="464.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="View.DictionaryDisplay">
+   <children>
+      <Label layoutX="40.0" layoutY="20.0" prefHeight="46.0" prefWidth="259.0" text="The Dictionary">
+         <font>
+            <Font name="Candara Bold" size="40.0" />
+         </font>
+      </Label>
+      <ScrollPane layoutY="75.0" prefHeight="411.0" prefWidth="466.0">
+         <content>
+            <TextArea fx:id="ta_dictionaryDisplay" prefHeight="397.0" prefWidth="464.0" />
+         </content>
+      </ScrollPane>
+   </children>
+</AnchorPane>

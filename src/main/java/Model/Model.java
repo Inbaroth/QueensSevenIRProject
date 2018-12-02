@@ -8,6 +8,9 @@ import java.util.Observable;
 
 public class Model extends Observable {
     private ReadFile readFile;
+    private long startTime;
+    private long endTime;
+    private double totalSecondsToIndex;
     public Model() {
 
     }
@@ -20,15 +23,46 @@ public class Model extends Observable {
      */
     public void loadPath(String path, String fileKind, boolean stemming){
         //add filekind so it would know if its what corpus to parse or where to save the index
+
+        startTime = System.nanoTime();
         //CHANGE
          readFile = new ReadFile(path,stemming);
-
+         endTime = System.nanoTime();
+         totalSecondsToIndex = (endTime-startTime) / 1000000000.0;
     }
 
     //this func will delete all posting and dictionary files that have been saved
     //the posting files will be at the same path as been given while creating them
     //also need to clear main memory in the program
     public void resetAll() {
+        //readFile.getParser().getIndexer().reset();
+        readFile = null;
+        System.gc();
+    }
+
+    /**
+     * this func will return list of all documents languages sorted
+     * @return
+     */
+    public SortedList<String> getDocumentsLanguages() {
+        //CHANGE THIS HERE !!!!!!!!!!!
+        return null;
+    }
+
+    public String dictionaryToString() {
+        //CHANGE THIS HERE
+        return null;
+        //create a func which return a string which represent the dictionary SORTED like this:
+        // term, numberOfPerformances
+        // dad, 50
+        // family, 12
+        // Mom, 52
+    }
+
+
+    public void uploadDictionaryToMem() {
+    //create a func which will take the dictionary from path where posting files and dict is saved
+    //and upload the dict itself to main memory
     }
 
     //DO THIS:
@@ -43,4 +77,18 @@ public class Model extends Observable {
         //SortedList<String>  languages= new SortedList<String>();
         //return languages;
     //}
+
+    public int getNumberOfDocs(){
+        //CHANGE
+        return 0;
+    }
+
+    public int getNumberOfTerms(){
+        //CHANGE
+        return 0;
+    }
+
+    public double getTotalTimeToIndex(){
+        return totalSecondsToIndex;
+    }
 }

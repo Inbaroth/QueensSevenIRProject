@@ -35,7 +35,7 @@ public class View implements Observer {
     }
 
     public void Start(ActionEvent actionEvent) {
-        newStage("OperatingWindow.fxml", "", operatingWindow, 650, 490);
+        newStage("OperatingWindow.fxml", "", operatingWindow, 670, 490);
     }
 
 

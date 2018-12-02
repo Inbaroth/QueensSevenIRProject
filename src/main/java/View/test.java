@@ -5,6 +5,10 @@ import java.io.File;
 public class test {
 
     public static void main(String[] args) {
+
+
+
+
 //        //final File f = new File("C:\\Users\\איתן אביטן\\Downloads\\corpus\\corpus");
 //        //listFilesForFolder(f);
 //        String sss = "";
