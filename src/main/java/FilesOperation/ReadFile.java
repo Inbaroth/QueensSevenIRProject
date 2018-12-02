@@ -10,23 +10,23 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReadFile extends Thread{
+public class ReadFile{
 
     File folder;
     Parse parser;
 
-    private static int counter = 0;
-
+    public static int counter = -1;
 
 
     /**
      *
-     * @param path
+     * @param pathToParse
      */
-    public ReadFile(String path, boolean isStemming) {
-        folder = new File(path);
-        parser = new Parse(isStemming);
+    public ReadFile(String pathToParse,String pathToSaveIndex,  boolean isStemming) {
+        folder = new File(pathToParse);
+        parser = new Parse(pathToSaveIndex, isStemming);
         listFilesForFolder(folder);
+        parser.notifyDone();
     }
 
     private void listFilesForFolder(File folder) {
@@ -36,6 +36,7 @@ public class ReadFile extends Thread{
             } else {
                 System.out.println(fileEntry.getName());
                 Document document = null;
+                counter++;
                 try {
                     document = Jsoup.parse(new String (Files.readAllBytes(fileEntry.toPath())));
                 } catch (IOException e) {
@@ -47,9 +48,6 @@ public class ReadFile extends Thread{
                     String docId = e.getElementsByTag("DOCNO").text();
                     parser.parsing(docId,docText,fileEntry.getName(),counter);
                 }
-                counter++;
-                if (counter == 50)
-                    counter = 0;
             }
         }
     }

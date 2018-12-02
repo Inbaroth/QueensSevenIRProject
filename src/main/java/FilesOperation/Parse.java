@@ -1,45 +1,47 @@
 package FilesOperation;
 
 import InvertedIndex.Indexer;
-import com.sun.xml.internal.bind.v2.util.QNameMap;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.tartarus.snowball.SnowballProgram;
-import org.tartarus.snowball.SnowballStemmer;
-
 import java.io.*;
-import java.security.KeyStore;
 import java.text.BreakIterator;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Parse {
 
-    // String - term
-    Map <String, HashMap<DocumentDetails,Integer>> termsMap;
     Indexer indexer;
     boolean isStemming;
     Stemmer stemmer;
+
+    // String - term
+    HashMap <String, HashMap<DocumentDetails,Integer>> termsMap;
     HashSet<String> stopWords;
+    HashSet<String> corpusLanguages;
     HashMap<String,String> monthDictionary;
     HashMap<String,String> numbersDictionary;
     HashMap<String,String> pricesDictionary;
     HashSet<String> precentSet;
     HashSet<String> dollarSet;
+
     int maxTermFrequency = 0;
+    int numberOfDistinctWords = 0;
+    ThreadPoolExecutor threadPoolExecutor;
 
 
     /**
      * Constructor
      */
-    public Parse(boolean isStemming) {
-        this.termsMap = new ConcurrentHashMap<>();
-        this.indexer = new Indexer();
+    public Parse(String pathToSaveIndex, boolean isStemming) {
+        this.termsMap = new HashMap<>();
+        this.indexer = new Indexer(pathToSaveIndex);
         this.isStemming = isStemming;
         if (isStemming)
             stemmer = new Stemmer();
         this.stopWords = new HashSet<>();
+        corpusLanguages = new HashSet<>();
         // create and fill dictionaries
         this.monthDictionary = new HashMap<>();
         this.numbersDictionary = new HashMap<>();
@@ -47,6 +49,10 @@ public class Parse {
         this.precentSet = new HashSet<>();
         this.dollarSet = new HashSet<>();
         fillMonthDictionary();
+
+        int threadPoolSize = Runtime.getRuntime().availableProcessors() * 2;
+        this.threadPoolExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+        threadPoolExecutor.setCorePoolSize(threadPoolSize);
 
         // load stop words into dictionary
         File file = new File("src/main/resources/stop words.txt");
@@ -148,7 +154,8 @@ public class Parse {
      */
     public void parsing(String docId, String docText, String fileName, int counter){
         // every 50 files, move all the data in the term map into indexer and reset the map
-        if (counter == 50) {
+        if (counter == 100) {
+            ReadFile.counter = 0;
             moveToIndexer();
             this.termsMap = new HashMap<>();
         }
@@ -158,6 +165,8 @@ public class Parse {
         BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.US);
         //get the city name of the doc and adding it to the dictionary
         String cityName = StringUtils.substringBetween(docText, "<f p=\"104\">\n ","</f> \n");
+        // get the language of the document and adding it to the corpusLanguage hash set
+        String language = StringUtils.substringBetween(docText, "<f p=\"105\">\n ","</f>");
         if (cityName != null){
             cityName = cityName.trim();
             int indexOfSpace = cityName.indexOf(" ");
@@ -165,6 +174,11 @@ public class Parse {
                 cityName = cityName.substring(0,indexOfSpace);
             documentDetails.setCityName(cityName);
             updateTerm(cityName.toUpperCase(),documentDetails);
+        }
+        if (language != null){
+            language = language.trim();
+            corpusLanguages.add(language);
+            documentDetails.setLanguage(language);
         }
 
         Document document = Jsoup.parse(docText);
@@ -181,7 +195,9 @@ public class Parse {
 
         }
         documentDetails.setMaxTermFrequency(maxTermFrequency);
+        documentDetails.setNumberOfDistinctWords(numberOfDistinctWords);
         maxTermFrequency = 0;
+        numberOfDistinctWords = 0;
 
     }
 
@@ -218,14 +234,19 @@ public class Parse {
             if (wordsInDoc[i].length() == 0 || punctuations.contains(wordsInDoc[i]) || wordsInDoc[i].contains("--"))
                 continue;
 
-            if (stopWords.contains(wordsInDoc[i]) && !wordsInDoc[i].equals("between"))
+            if (stopWords.contains(wordsInDoc[i].toLowerCase()) && !wordsInDoc[i].equalsIgnoreCase("between") && !wordsInDoc[i].equals("may"))
                 continue;
 
-            // if wordsInDoc[i] start with "
-            if (wordsInDoc[i].indexOf("\"") == 0) {
+            // if wordsInDoc[i] start with " or '
+            if (wordsInDoc[i].startsWith("\"") || wordsInDoc[i].startsWith("'") || wordsInDoc[i].startsWith("/")) {
                 wordsInDoc[i] = wordsInDoc[i].substring(1);
                 if (wordsInDoc[i].length() == 0)
                     continue;
+            }
+
+            // if wordInDoc[i] start with multiple . or -remove them
+            while (wordsInDoc[i].startsWith(".") || wordsInDoc[i].startsWith("-")){
+                wordsInDoc[i] = wordsInDoc[i].substring(1);
             }
 
             //check if the word in the array ends with ','
@@ -236,6 +257,61 @@ public class Parse {
                 if (wordsInDoc[i].endsWith(","))
                     continue;
             }
+
+            // remove () if exist in the beginning and end of the word
+            // like (WORD)
+            if (wordsInDoc[i].startsWith("(") && wordsInDoc[i].endsWith(")")){
+                if (wordsInDoc[i].endsWith(")"))
+                    wordsInDoc[i] = wordsInDoc[i].substring(1,wordsInDoc[i].length() - 1);
+                else
+                    wordsInDoc[i] = wordsInDoc[i].substring(1);
+            }
+
+
+            // check if the string in wordInDoc[i] contains only letters
+            if (!monthDictionary.containsKey(wordsInDoc[i]) && isAlpha(wordsInDoc[i])){
+                // the word doesn't exist in the dictionary starting with LOWER and UPPER
+                if (!termsMap.containsKey(wordsInDoc[i].toUpperCase()) && !termsMap.containsKey(wordsInDoc[i].toLowerCase())) {
+                    if (Character.isUpperCase(wordsInDoc[i].charAt(0)))
+                        updateTerm(wordsInDoc[i].toUpperCase(), documentDetailes);
+                    else
+                        updateTerm(wordsInDoc[i], documentDetailes);
+                    continue;
+                }
+                //WORD starts with UPPER and exist in dic with LOWER, update dic with LOWER CASE of WORD
+                if (Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(wordsInDoc[i].toLowerCase())) {
+                    updateTerm(wordsInDoc[i].toLowerCase(), documentDetailes);
+                    continue;
+                }
+
+                //WORD starts with LOWER and exist in dic with UPPER, update dic with LOWER CASE of WORD and update key to LOWER
+                if (!Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(wordsInDoc[i].toUpperCase())) {
+                    termsMap.get(wordsInDoc[i]).putAll(termsMap.get(wordsInDoc[i].toUpperCase()));
+                    int currentNumOfAppearance = 0;
+                    if (termsMap.get(wordsInDoc[i]).containsKey(documentDetailes))
+                        currentNumOfAppearance = (termsMap.get(wordsInDoc[i])).get(documentDetailes);
+                    if (currentNumOfAppearance > maxTermFrequency)
+                        maxTermFrequency = currentNumOfAppearance;
+                    (termsMap.get(wordsInDoc[i])).put(documentDetailes, currentNumOfAppearance + 1);
+                    termsMap.remove(wordsInDoc[i].toUpperCase());
+                    continue;
+                }
+
+                // if starts with lower and doesnt exist in the dictionary with upper, insert the word to the dictionary in lower
+                if (Character.isLowerCase(wordsInDoc[i].charAt(0))){
+                    updateTerm(wordsInDoc[i],documentDetailes);
+                    continue;
+                }
+                //covers case of starts only with UPPER
+                updateTerm(wordsInDoc[i].toUpperCase(), documentDetailes);
+                continue;
+
+            }
+
+            while (wordsInDoc[i].startsWith("['()\":&!?+]")){
+                wordsInDoc[i] = wordsInDoc[i].substring(1);
+            }
+
             //if it is NOT a tag , doesn't starts with '<'
             //if(!((wordsInDoc[i].charAt(0)== '<') || wordsInDoc[i].charAt(wordsInDoc[i].length()-1) == '>')){
             if (!(wordsInDoc[i].contains("<"))) {
@@ -364,7 +440,9 @@ public class Parse {
 
                             }
                         }
-                        if (isInteger(wordsInDoc[i + 1],false)) {
+                        // check if the next cell is a fraction
+                        // if it does it part of the number in wordInDoc[i]
+                        if (wordsInDoc[i+1].indexOf("/") != -1 && isInteger(wordsInDoc[i + 1],false)) {
                             twoNumsCells = true;
                         }
                     }
@@ -530,37 +608,10 @@ public class Parse {
 
                 }
 
-                wordsInDoc[i] = wordsInDoc[i].replaceAll("[^a-zA-Z]", "");
+/*                wordsInDoc[i] = wordsInDoc[i].replaceAll("[^a-zA-Z]", "");
                 if (wordsInDoc[i].length() == 0)
-                    continue;
-                // the word doesn't exist in the dictionary starting with LOWER and UPPER
-                if (!termsMap.containsKey(wordsInDoc[i].toUpperCase()) && !termsMap.containsKey(wordsInDoc[i].toLowerCase())) {
-                    if (Character.isUpperCase(wordsInDoc[i].charAt(0)))
-                        updateTerm(wordsInDoc[i].toUpperCase(), documentDetailes);
-                    else
-                        updateTerm(wordsInDoc[i], documentDetailes);
-                    continue;
-                }
-                //WORD starts with UPPER and exist in dic with LOWER, update dic with LOWER CASE of WORD
-                if (Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(wordsInDoc[i].toLowerCase())) {
-                    updateTerm(wordsInDoc[i].toLowerCase(), documentDetailes);
-                    continue;
-                }
+                    continue;*/
 
-                //WORD starts with LOWER and exist in dic with UPPER, update dic with LOWER CASE of WORD and update key to LOWER
-                if (!Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(wordsInDoc[i].toUpperCase())) {
-                    termsMap.get(wordsInDoc[i]).putAll(termsMap.get(wordsInDoc[i].toUpperCase()));
-                    int currentNumOfAppearance = 0;
-                    if (termsMap.get(wordsInDoc[i]).containsKey(documentDetailes))
-                        currentNumOfAppearance = (termsMap.get(wordsInDoc[i])).get(documentDetailes);
-                    if (currentNumOfAppearance > maxTermFrequency)
-                        maxTermFrequency = currentNumOfAppearance;
-                    (termsMap.get(wordsInDoc[i])).put(documentDetailes, currentNumOfAppearance + 1);
-                    termsMap.remove(wordsInDoc[i].toUpperCase());
-                    continue;
-                }
-                //covers case of starts only with UPPER
-                updateTerm(wordsInDoc[i].toUpperCase(), documentDetailes);
             }
 
         }
@@ -697,24 +748,30 @@ public class Parse {
      * @return
      */
     private StringBuilder allCharactersZero(StringBuilder str) {
-        boolean ans = true;
-        int dotIndex = str.indexOf(".");
-        String temp = str.toString();
-        StringBuilder strTmp = str.delete(0,dotIndex + 1);
-        for (int i = 1; i < strTmp.length(); i++) {
-            if (strTmp.charAt(i) != '0') {
-                ans = false;
+        for (int i = str.length() - 1; i > -1 ; i--) {
+            if (str.charAt(i) != '0')
                 break;
-            }
+            else
+                str = str.delete(i,str.length());
         }
-        if (ans){
-            str.replace(0,str.length(),temp);
-            str.delete(dotIndex,str.length());
-            return str;
-        }
-        return str.replace(0,str.length(),temp);
+        return str;
     }
 
+    /**
+     *
+     * @param name
+     * @return
+     */
+    public boolean isAlpha(String name) {
+        char[] chars = name.toCharArray();
+
+        for (char c : chars) {
+            if(!Character.isLetter(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
     /**
      * if the word ends with comma, returns the word without the comma
      * else returns the word
@@ -736,18 +793,20 @@ public class Parse {
      * @return
      */
     public String[] splitByDelimiter( String line, char delimiter) {
-
         if(line.equals(" ")) {
             String[] result = {""};
             return result;
         }
+        line = line.replaceAll("['()\":&!?+*^#@]","");
         CharSequence[] temp = new CharSequence[(line.length() / 2) + 1];
         int wordCount = 0;
         int i = 0;
         int j = line.indexOf(delimiter, 0); // first substring
 
         while (j >= 0) {
-            temp[wordCount++] = line.substring(i, j);
+            String word = line.substring(i,j);
+            word = word.trim();
+            temp[wordCount++] = word;
             i = j + 1;
             j = line.indexOf(delimiter, i); // rest of substrings
         }
@@ -767,23 +826,22 @@ public class Parse {
     /**
      * create term if not exist, update the dictionary of docs
      * @param key - the name of city under tag <F P=104>
-     * @param documentDetailes - name of document where tag is under, name of file where doc is under
+     * @param documentDetails - name of document where tag is under, name of file where doc is under
      */
-    private void updateTerm(String key, DocumentDetails documentDetailes ){
+    private void updateTerm(String key, DocumentDetails documentDetails){
         //check if term not exist in dictionary , add key to TreeMapDic and create it's dic of docs
         if(!termsMap.containsKey(key)){
             HashMap<DocumentDetails,Integer> documentsHashMap = new HashMap<>();
-            documentsHashMap.put(documentDetailes, 1);
-            documentDetailes.setTermFrequency(1);
+            documentsHashMap.put(documentDetails, 1);
             termsMap.put(key,documentsHashMap);
+            numberOfDistinctWords++;
             //key exist , update value.
         } else {
             int currentNumOfAppearance = 0;
-            if (termsMap.get(key).containsKey(documentDetailes))
-                currentNumOfAppearance = (termsMap.get(key)).get(documentDetailes);
-            (termsMap.get(key)).put(documentDetailes,currentNumOfAppearance+1);
+            if (termsMap.get(key).containsKey(documentDetails))
+                currentNumOfAppearance = (termsMap.get(key)).get(documentDetails);
+            (termsMap.get(key)).put(documentDetails,currentNumOfAppearance+1);
             // find the max frequency in each doc
-            documentDetailes.setTermFrequency(currentNumOfAppearance);
             if (currentNumOfAppearance > maxTermFrequency)
                 maxTermFrequency = currentNumOfAppearance;
         }
@@ -862,31 +920,33 @@ public class Parse {
     /**
      * This function send the terms map dictionary to the Indexer object for continuous progress
      */
-    public void moveToIndexer() {
-        // need to do stem
+    public synchronized void moveToIndexer() {
+        // if needed to do stem
         if (isStemming) {
-            Iterator it = termsMap.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                String key = (String) entry.getKey();
-                // stem the key using porter stemmer algorithm
-                String stem = stemmer.stemTerm(key);
-                // if the stem of key exist in the terms dictionary, merge the key values to stem, and remove key from dictionary
-                if (!key.equals(stem)){
-                    if (termsMap.containsKey(stem)) {
-                        termsMap.get(stem).putAll(termsMap.get(key));
-                    }
-                    else if (!termsMap.containsKey(stem)){
-                        termsMap.put(stem,termsMap.get(key));
-                    }
-                    it.remove();
-                }
-
-            }
+            stemmer.stemMap(this.termsMap);
         }
-        indexer.buildIndex(this.termsMap);
+//        threadPoolExecutor.execute(new RunnableBuildIndex());
+/*        Thread thread = new Thread(new RunnableBuildIndex());
+        thread.start();*/
+        indexer.buildIndex(termsMap);
+
     }
 
+    public Indexer getIndexer() {
+        return indexer;
+    }
+
+    public void notifyDone() {
+        indexer.mergePostingFile();
+    }
+
+    private class RunnableBuildIndex implements Runnable{
+
+        @Override
+        public void run() {
+            indexer.buildIndex(termsMap);
+        }
+    }
 
 }
 
