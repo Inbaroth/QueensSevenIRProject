@@ -17,16 +17,16 @@ public class Model extends Observable {
 
     /**
      * create new index from given corpus path and save it to given index destination
-     * @param path
-     * @param fileKind
+     * @param pathOfCorpus
+     * @param pathOfIndexDestination
      * @param stemming
      */
-    public void loadPath(String path, String fileKind, boolean stemming){
+    public void loadPath(String pathOfCorpus, String pathOfIndexDestination, boolean stemming){
         //add filekind so it would know if its what corpus to parse or where to save the index
 
         startTime = System.nanoTime();
         //CHANGE
-         readFile = new ReadFile(path,stemming);
+         readFile = new ReadFile(pathOfCorpus,pathOfIndexDestination,stemming);
          endTime = System.nanoTime();
          totalSecondsToIndex = (endTime-startTime) / 1000000000.0;
     }
@@ -35,7 +35,7 @@ public class Model extends Observable {
     //the posting files will be at the same path as been given while creating them
     //also need to clear main memory in the program
     public void resetAll() {
-        //readFile.getParser().getIndexer().reset();
+        readFile.getParser().getIndexer().reset();
         readFile = null;
         System.gc();
     }
