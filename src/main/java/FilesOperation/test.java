@@ -1,19 +1,13 @@
 package FilesOperation;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.File;
-import java.lang.annotation.ElementType;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class test{
 
     public static void main(String[] args) {
         String line = "<TEXT> for 112 Million company, Vacation4U 2 3/4% is preety bad, on 14 MAY, They spent 55 Trillion, While 320 bn Dollars waisted on drugs, BAD Step-By-Step, 2-4 times. From 10 1/2-11,000,122. Between 12 1/2 and 4,000,123. </TEXT>";
-        String line1 = "<TEXT> 12.555 kids. Hey 1) he said: hello frein hey. </TEXT>";
+        String line1 = "<TEXT> Wafer:Dollars. </TEXT>";
 //        String line2 = "<TEXT> Hey hong Hong. </TEXT>";
         String text = getText();
         String text1 = getText1();
@@ -21,158 +15,121 @@ public class test{
         String text3 = getText3();
         String text4 = getText4();
         String text5 = getText5();
-      // Parse p = new Parse();
+//        p.parsing("1",text,"1",0);
         long startTime = System.nanoTime();
-//        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus");
-       //   ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396010");
-//          ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396011");
-//          ReadFile reader2 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FB396012");
-//        p.parsing("1",text,"inbar");
-//        p.parsing("1",text,"inbar1");
-//        p.parsing("1",text2,"inbar2");
-//        p.parsing("1",text3,"inbar3");
-//        p.parsing("1",text4,"inbar4");
-//        p.parsing("1",line2,"inbar5");
+//        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus",false);
+//          ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FT941",false);
+          ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus2","src/main/resources",false);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime)/1000000;
-        System.out.println(duration);
         System.out.println("*******************");
 
-      //  reader.getParser().moveToIndexer();
 
-//        Map<String, HashMap<DocumentDetails,Integer>> map = reader.getParser().getTermsMap();
-//        Map<String, HashMap<String,Integer>> map = p.getTermsMap();
-
-/*        for (Map.Entry<String,HashMap<String,Integer>> entry:map.entrySet()) {
+/*        Map<String, HashMap<DocumentDetails,Integer>> map = p.getTermsMap();
+        for (Map.Entry<String,HashMap<DocumentDetails,Integer>> entry:map.entrySet()) {
             System.out.print(entry.getKey()+ ": ");
-                for (Map.Entry<String, Integer> doc : entry.getValue().entrySet()) {
+                for (Map.Entry<DocumentDetails, Integer> doc : entry.getValue().entrySet()) {
                     System.out.print("<" + doc.getKey() + " , " + doc.getValue() + "> -> ");
                 }
                 System.out.println();
         }*/
+
         duration = duration/60000;
         System.out.println(duration + " min");
+//        System.out.println("Number of tokens: " + reader.getParser().getTermsMap().size());
+        System.out.println(reader1.getParser().getIndexer().dictionary.size());
+
 
     }
 
     private static String getText() {
-        return "\n" +
-                "<TEXT>\n" +
-                "Language: <F P=105> English </F>\n" +
-                "Article Type:BFN \n" +
-                "\n" +
-                "<F P=106> [By Amy Chew] </F>\n" +
-                "  [Text] Hong Kong stands to lose up to $187 billion, or \n" +
-                "nine percent of its yearly trade, if China's Most Favoured \n" +
-                "Nation (MFN) status is withdrawn this year. The territory's \n" +
-                "re-exports from China to the United States, which account for 60 \n" +
-                "percent of total exports to the country, would suffer a loss of \n" +
-                "up to $77 billion, or 46 percent, according to the latest \n" +
-                "assessment from the Trade Department. \n" +
-                "  \"A reduction of up to $77 billion worth of re-exports is \n" +
-                "double the impact we estimated in 1990,\" the department's deputy \n" +
-                "director-general, Christopher Jackson, said. \"This is largely \n" +
-                "the result of the very rapid growth in Hong Kong's re-export of \n" +
-                "China-made goods to the United States over the past few years,\" \n" +
-                "he said. The loss of MFN would see tariff rates in China \n" +
-                "increase by two to 10 times, according to the department's \n" +
-                "principal economist Cheung Hok-ying. \n" +
-                "  Mr Jackson said the figures did not take into account China \n" +
-                "retaliating against the U.S. by restricting the number of \n" +
-                "American products coming into China. \"However, in this area, \n" +
-                "Hong Kong is less vulnerable. Only 30 percent of U.S. exports \n" +
-                "to China travel through Hong Kong,\" he said. \n" +
-                "  While outlining the potential loss to Hong Kong's economy, \n" +
-                "Mr \n" +
-                "Jackson said: \"No community is more concerned about human \n" +
-                "rights then Hong Kong but the issue, in this context, is a \n" +
-                "matter between the U.S. and China. \n" +
-                "  \"For Hong Kong, our message remains focused on the impact, \n" +
-                "or \n" +
-                "economic damage, that the MFN withdrawal will have on Hong \n" +
-                "Kong.\" This is the same message the Government will present in \n" +
-                "Washington as part of its lobbying efforts to have China retain \n" +
-                "MFN status. \n" +
-                "  Hong Kong's role as a gateway to China was also likely to be \n" +
-                "undermined, thus affecting longer-term growth potential and \n" +
-                "business confidence. Manufacturing investment ventures and \n" +
-                "other production arrangements by Hong Kong and foreign companies \n" +
-                "in China, including American firms, were likely to suffer \n" +
-                "significantly. \n" +
-                "  Mr Jackson said related trade flows, such as the import of \n" +
-                "raw material to Hong Kong and into China and other countries, \n" +
-                "could hurt Hong Kong's trade by as much as nine percent. Other \n" +
-                "areas which would take a blow were transport storage, banking, \n" +
-                "finance, insurance and many other areas of the service sector \n" +
-                "which supported Hong Kong's role as an entrepot. \n" +
-                "  The chairman of the American Chamber of Commerce, Gerry \n" +
-                "Murdock, said MFN status had become the most important issue in \n" +
-                "Sino-U.S. relations. \"And this should not be the case,\" he \n" +
-                "said. U.S.-China relations should move beyond this point. \n" +
-                "\n" +
-                "</TEXT>\n" +
-                "\n" +
-                "</DOC>\n" +
-                "\n" +
-                "<DOC>\n" +
-                "<DOCNO> FBIS3-2303 </DOCNO>\n" +
-                "<HT>    \"drchi045_w_94005\" </HT>\n" +
-                "\n" +
-                "\n" +
-                "<HEADER>\n" +
-                "<AU>   FBIS-CHI-94-045 </AU>\n" +
-                "Document Type:Daily Report \n" +
-                "<DATE1>  8 Mar 1994 </DATE1>\n" +
-                "\n" +
-                "</HEADER>\n" +
-                "\n" +
-                "<F P=100> HONG KONG &amp; MACAO </F>\n" +
-                "<F P=101> Hong Kong </F>\n" +
-                "<H3> <TI>   XINHUA Chief Comments on Upcoming NPC Session </TI></H3>\n" +
-                "<F P=102>  HK0803080694 Beijing ZHONGGUO XINWEN SHE in Chinese 1352 GMT \n" +
-                "7 Mar 94 </F>\n" +
-                "\n" +
-                "<F P=103> HK0803080694 </F>\n" +
-                "<F P=104>  Beijing ZHONGGUO XINWEN SHE </F>\n" +
-                "\n" +
-                "\n" +
-                "<TEXT>\n" +
-                "Language: <F P=105> Chinese </F>\n" +
-                "Article Type:BFN \n" +
-                "\n" +
-                "<F P=106> [By reporters Gan Zhebin (3927 0772 2430) and Zhang Lei </F>\n" +
-                "(1728 7191)] \n" +
-                "  [Text] Beijing, 7 Mar (ZHONGGUO XINWEN SHE)--Upon his \n" +
-                "arrival in Beijing from Hong Kong today to attend the Second \n" +
-                "Session of the Eighth National People's Congress [NPC], Zhou \n" +
-                "Nan, NPC deputy and director of the Hong Kong Branch of the \n" +
-                "XINHUA NEWS AGENCY, told reporters during a special interview \n" +
-                "that, although the British side is not cooperating on the Hong \n" +
-                "Kong issue, the Chinese side, along with the Hong Kong \n" +
-                "compatriots, can absolutely ensure Hong Kong's steady transition \n" +
-                "and prolonged prosperity and stability. This is beyond \n" +
-                "question, and no force can stop us from achieving this objective. \n" +
-                "  Zhou Nan said: We are now in an important period for the \n" +
-                "country to carry out reform and opening up and establish the \n" +
-                "socialist market economy. Some major reform measures will be \n" +
-                "introduced. We hope to solicit opinions through these \"two \n" +
-                "sessions\" and correctly handle the relations between \n" +
-                "development, stability, and reform. In addition, we will \n" +
-                "further carry out the policy of \"doing two types of work \n" +
-                "simultaneously,\" namely, we will pay attention to material and \n" +
-                "spiritual civilizations and to the formation of the democratic \n" +
-                "and legal systems to enable the country's economic modernization \n" +
-                "to embark on a healthy track. \n" +
-                "  One of the two reporters asked if the Hong Kong issue would \n" +
-                "become a hot topic at the \"two sessions.\" Zhou Nan said he \n" +
-                "believed that Premier Li Peng's government work report would \n" +
-                "refer to the Hong Kong issue, that the Hong Kong NPC deputies \n" +
-                "and members as well as the mainland NPC deputies and members \n" +
-                "will make some comments on the Hong Kong situation, and that, to \n" +
-                "express state and popular intentions, the NPC and the National \n" +
-                "Committee of the Chinese People's Political Consultative \n" +
-                "Conference will, of course, respond to this issue. \n" +
-                "\n" +
+        return "<TEXT>\n" +
+                " -------------------------------------\n" +
+                "UK\n" +
+                " -------------------------------------\n" +
+                "Aerostructures              26\n" +
+                "Alexon                      24\n" +
+                "Baird (William)             27\n" +
+                "Bardon Group                26\n" +
+                "Blenheim                    24\n" +
+                "Brake Bros                  26\n" +
+                "Brit Bio-technology         25\n" +
+                "British Aerospace        27,23\n" +
+                "British Gas                 29\n" +
+                "CINVen                      24\n" +
+                "Cable and Wireless          24\n" +
+                "Coal Investments            27\n" +
+                "Croda                       25\n" +
+                "Edinburgh Fund Man          27\n" +
+                "Estates&amp; General            27\n" +
+                "European Motor Hdgs         16\n" +
+                "GKN                         23\n" +
+                "Hammerson               23, 22\n" +
+                "Harland and Wolff           25\n" +
+                "Henderson Highland          27\n" +
+                "Heron                       25\n" +
+                "Hickson                     26\n" +
+                "Hodder Headline             24\n" +
+                "Jeyes                       24\n" +
+                "Jourdan (Thomas)            27\n" +
+                "Kapiti                      26\n" +
+                "Latin American Cos          27\n" +
+                "Littlewoods                 27\n" +
+                "Lloyd Thompson              25\n" +
+                "London Clubs Int            16\n" +
+                "Macfarlane                  26\n" +
+                "Misys                       26\n" +
+                "Monarch Resources           27\n" +
+                "Morgan Grenfell             27\n" +
+                "Nestor-BNA                  27\n" +
+                "Next                    23, 22\n" +
+                "Norwich Union        25, 22, 1\n" +
+                "OIS Intl Inspection         27\n" +
+                "Pentos                      24\n" +
+                "PosTel                      23\n" +
+                "Proudfoot                   26\n" +
+                "Psion                       24\n" +
+                "Raglan Prop Trust           16\n" +
+                "Ropner                      27\n" +
+                "Rotork                      26\n" +
+                "Scottish Asian Inv          27\n" +
+                "Servomex                    27\n" +
+                "Taylor Woodrow              24\n" +
+                "Thorpe (FW)                 27\n" +
+                "Tibbett &amp; Britten           24\n" +
+                "Transfer Technology         24\n" +
+                "Ulster Television           27\n" +
+                "Wainhomes                   26\n" +
+                "Waterford Wedgwood          25\n" +
+                "Watts Blake Bourne          24\n" +
+                "Westland                    23\n" +
+                " -------------------------------------\n" +
+                "Overseas\n" +
+                " -------------------------------------\n" +
+                "Anglo American              30\n" +
+                "BMW                         28\n" +
+                "Bertelsmann                 28\n" +
+                "Casino                      31\n" +
+                "Ciba                    28, 22\n" +
+                "Coors                       29\n" +
+                "Credit Lyonnais             29\n" +
+                "Deutsche Bank               28\n" +
+                "GM                          29\n" +
+                "Grumman                     29\n" +
+                "Horsham                     29\n" +
+                "ING                         30\n" +
+                "JCI                         30\n" +
+                "KLM                         28\n" +
+                "Mars                        22\n" +
+                "Microsoft                   30\n" +
+                "Moscow Narodny              29\n" +
+                "New World Devlop'mnt        30\n" +
+                "Northrop                    29\n" +
+                "Pirelli                     29\n" +
+                "Rinascente                  31\n" +
+                "Trizec                      29\n" +
+                "Viacom                      29\n" +
+                " -------------------------------------\n" +
                 "</TEXT>\n";
     }
     private static String getText1(){
@@ -675,7 +632,7 @@ public class test{
                 "warning against such \"pressure\" tactics, the North Korean \n" +
                 "statement said that any attempts at pressuring the DPRK \"would \n" +
                 "lead to a situation in which we would have no choice but to take \n" +
-                "a decisive measure to counter them.\"  The statement went on to \n" +
+                "a decisive measure to termsCounter them.\"  The statement went on to \n" +
                 "pledge that Pyongyang will watch to see if the IAEA \"intends to \n" +
                 "resolve our nuclear issue fairly or attempts to use it for \n" +
                 "political aims\"--a relatively circumspect formulation that would \n" +
