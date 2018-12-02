@@ -1,6 +1,8 @@
 package Controller;
 
 import Model.Model;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
 import javafx.scene.control.Alert;
 
@@ -36,8 +38,10 @@ public class Controller extends Observable implements Observer {
     }
 
 
-    public SortedList<String> getDocumentsLanguages(){
-        return model.getDocumentsLanguages();
+    public ObservableList<String> getDocumentsLanguages(){
+        ArrayList<String> docsLang = model.getDocumentsLanguages();
+        ObservableList<String> docLangObservable = FXCollections.observableArrayList(docsLang);
+        return docLangObservable;
     }
 
     public void resetAll(){

@@ -44,9 +44,8 @@ public class Model extends Observable {
      * this func will return list of all documents languages sorted
      * @return
      */
-    public SortedList<String> getDocumentsLanguages() {
-        //CHANGE THIS HERE !!!!!!!!!!!
-        return null;
+    public ArrayList<String> getDocumentsLanguages() {
+       return readFile.getParser().getCorpusLanguages();
     }
 
     public String dictionaryToString() {
@@ -79,13 +78,11 @@ public class Model extends Observable {
     //}
 
     public int getNumberOfDocs(){
-        //CHANGE
-        return 0;
+       return readFile.getParser().getNumberOfDocuments();
     }
 
     public int getNumberOfTerms(){
-        //CHANGE
-        return 0;
+        return readFile.getParser().getIndexer().dictionary.size();
     }
 
     public double getTotalTimeToIndex(){
