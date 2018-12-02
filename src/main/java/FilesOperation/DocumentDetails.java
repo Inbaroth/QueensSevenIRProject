@@ -8,8 +8,10 @@ public class DocumentDetails {
     String docId;
     String fileName;
     String cityName;
+    String language;
     int termFrequency;
     int maxTermFrequency;
+    int numberOfDistinctWords;
 
     /**
      * Constructor
@@ -35,6 +37,10 @@ public class DocumentDetails {
         return cityName;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
     public int getTermFrequency() {
         return termFrequency;
     }
@@ -42,11 +48,29 @@ public class DocumentDetails {
     public int getMaxTermFrequency() {
         return maxTermFrequency;
     }
+
+    public int getNumberOfDistinctWords() {
+        return numberOfDistinctWords;
+    }
+
     //</editor-fold>
 
+
     //<editor-fold desc="Setters">
+    public void setDocId(String docId) {
+        this.docId = docId;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
     public void setCityName(String cityName) {
         this.cityName = cityName;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
     public void setTermFrequency(int termFrequency) {
@@ -56,6 +80,9 @@ public class DocumentDetails {
     public void setMaxTermFrequency(int maxTermFrequency) {
         this.maxTermFrequency = maxTermFrequency;
     }
-    //</editor-fold>
 
+    public void setNumberOfDistinctWords(int numberOfDistinctWords) {
+        this.numberOfDistinctWords = numberOfDistinctWords;
+    }
+    //</editor-fold>
 }
