@@ -1,5 +1,7 @@
 package FilesOperation;
 
+import java.util.ArrayList;
+
 /**
  * This class saves all the details of each document in the corpus
  */
@@ -9,9 +11,11 @@ public class DocumentDetails {
     String fileName;
     String cityName;
     String language;
+    String date;
     int termFrequency;
     int maxTermFrequency;
     int numberOfDistinctWords;
+    ArrayList<Integer> listOfPositions;
 
     /**
      * Constructor
@@ -21,6 +25,7 @@ public class DocumentDetails {
     public DocumentDetails(String docId, String fileName) {
         this.docId = docId;
         this.fileName = fileName;
+        this.listOfPositions = new ArrayList<>();
     }
 
 
@@ -51,6 +56,10 @@ public class DocumentDetails {
 
     public int getNumberOfDistinctWords() {
         return numberOfDistinctWords;
+    }
+
+    public ArrayList<Integer> getListOfPositions() {
+        return listOfPositions;
     }
 
     //</editor-fold>
@@ -84,5 +93,14 @@ public class DocumentDetails {
     public void setNumberOfDistinctWords(int numberOfDistinctWords) {
         this.numberOfDistinctWords = numberOfDistinctWords;
     }
+
+    public void setPosition (int position){
+        this.listOfPositions.add(position);
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
     //</editor-fold>
 }
