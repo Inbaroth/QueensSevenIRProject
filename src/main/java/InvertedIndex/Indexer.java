@@ -167,6 +167,12 @@ public class Indexer {
 
     }
 
+    /**
+     *
+     * @param postingFiles
+     * @param postingFilesNames
+     * @return
+     */
     private Vector<File> mergeDuplicateLines(Vector<File> postingFiles, Vector<String> postingFilesNames) {
         Vector<File> newPostingFiles = new Vector<>();
         try {

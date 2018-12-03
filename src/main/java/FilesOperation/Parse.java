@@ -942,10 +942,10 @@ public class Parse {
         if (isStemming) {
             stemmer.stemMap(this.termsMap);
         }
-        //threadPoolExecutor.execute(new RunnableBuildIndex());
+        threadPoolExecutor.execute(new RunnableBuildIndex());
 /*        Thread thread = new Thread(new RunnableBuildIndex());
         thread.start();*/
-        indexer.buildIndex(termsMap);
+        //indexer.buildIndex(termsMap);
 
     }
 
@@ -961,6 +961,9 @@ public class Parse {
         return numberOfDocuments;
     }
 
+    /**
+     *
+     */
     public void notifyDone() {
         moveToIndexer();
         indexer.mergePostingFile();
