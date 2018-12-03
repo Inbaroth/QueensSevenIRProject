@@ -32,9 +32,13 @@ public class Indexer {
      *
      * @param pathToSaveIndex
      */
-    public Indexer(String pathToSaveIndex) {
+    public Indexer(String pathToSaveIndex, boolean isStemming) {
         this.pathToSaveIndex = pathToSaveIndex;
-        this.folder = new File(pathToSaveIndex);
+        if (isStemming)
+            this.folder = new File(pathToSaveIndex + "/PostingStemming");
+        else
+            this.folder = new File(pathToSaveIndex + "/Posting");
+        this.folder.mkdir();
         this.filesListLowerCase = new Vector<>();
         this.filesListUpperCase = new Vector<>();
         this.filesListNumbers = new Vector<>();
@@ -47,11 +51,11 @@ public class Indexer {
      *
      * //@param termsMap
      */
-    public synchronized void  buildIndex(ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails, Integer>> termsMap) {
+    public void  buildIndex(ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails, Integer>> termsMap) {
         ConcurrentSkipListMap<String, ConcurrentHashMap<DocumentDetails, Integer>> map = new ConcurrentSkipListMap<>(termsMap);
-        String path1 = this.pathToSaveIndex + "/posting" + counter.getAndIncrement() + "numbers.txt";
-        String path2 = this.pathToSaveIndex + "/posting" + counter.getAndIncrement() + "upperCase.txt";
-        String path3 = this.pathToSaveIndex + "/posting" + counter.getAndIncrement() + "lowerCase.txt";
+        String path1 = this.folder.getPath() + "/posting" + counter.getAndIncrement() + "numbers.txt";
+        String path2 = this.folder.getPath() + "/posting" + counter.getAndIncrement() + "upperCase.txt";
+        String path3 = this.folder.getPath() + "/posting" + counter.getAndIncrement() + "lowerCase.txt";
         File posting1 = new File(path1);
         File posting2 = new File(path2);
         File posting3 = new File(path3);
@@ -148,13 +152,13 @@ public class Indexer {
      */
     public void mergePostingFile() {
         try {
-        Parse.threadPoolExecutor.shutdown();
-        while (Parse.threadPoolExecutor.getActiveCount() != 0);
+        //Parse.threadPoolExecutor.shutdown();
+        //while (Parse.threadPoolExecutor.getActiveCount() != 0);
         //Parse.threadPoolExecutor.awaitTermination(Long.MAX_VALUE,TimeUnit.NANOSECONDS);
         // create a new merge posting file which will be contains all the files in the filesList field
-        String pathForNumbers = this.pathToSaveIndex + "/mergePostingNumbersTemp.txt";
-        String pathForLowerCase = this.pathToSaveIndex + "/mergePostingLowerCaseTemp.txt";
-        String pathForUpperCase = this.pathToSaveIndex + "/mergePostingUpperCaseTemp.txt";
+        String pathForNumbers = this.folder.toString() + "/mergePostingNumbersTemp.txt";
+        String pathForLowerCase = this.folder.toString() + "/mergePostingLowerCaseTemp.txt";
+        String pathForUpperCase = this.folder.toString() + "/mergePostingUpperCaseTemp.txt";
         this.postingNumbers = new File(pathForNumbers);
         this.postingLower = new File(pathForLowerCase);
         this.postingUpper = new File(pathForUpperCase);
@@ -168,7 +172,7 @@ public class Indexer {
                     return o1.compareTo(o2);
                 }
             };
-            Thread thread1 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
+/*            Thread thread1 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
             Thread thread2 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
             Thread thread3 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
             thread1.start();
@@ -176,43 +180,45 @@ public class Indexer {
             thread3.start();
             thread1.join();
             thread2.join();
-            thread3.join();
-/*            ExternalSort.mergeSortedFiles(this.filesListNumbers, this.postingNumbers, cmp, Charset.defaultCharset(), false);
+            thread3.join();*/
+            ExternalSort.mergeSortedFiles(this.filesListNumbers, this.postingNumbers, cmp, Charset.defaultCharset(), false);
             ExternalSort.mergeSortedFiles(this.filesListLowerCase, this.postingLower, cmp, Charset.defaultCharset(), false);
-            ExternalSort.mergeSortedFiles(this.filesListUpperCase, this.postingUpper, cmp, Charset.defaultCharset(), false);*/
+            ExternalSort.mergeSortedFiles(this.filesListUpperCase, this.postingUpper, cmp, Charset.defaultCharset(), false);
             Vector <File> postingFiles = new Vector();
             Vector <String> postingFilesNames = new Vector<>();
             postingFiles.add(this.postingLower);
-            postingFilesNames.add(this.pathToSaveIndex + "/mergePostingLowerCase.txt");
+            postingFilesNames.add(this.folder.toString() + "/mergePostingLowerCase.txt");
             postingFiles.add(this.postingUpper);
-            postingFilesNames.add(this.pathToSaveIndex + "/mergePostingUpperCase.txt");
+            postingFilesNames.add(this.folder.toString() + "/mergePostingUpperCase.txt");
             postingFiles.add(this.postingNumbers);
-            postingFilesNames.add(this.pathToSaveIndex + "/mergePostingNumbers.txt");
+            postingFilesNames.add(this.folder.toString() + "/mergePostingNumbers.txt");
             Vector <File> newPostingFiles = mergeDuplicateLines(postingFiles,postingFilesNames);
             this.postingLower = newPostingFiles.remove(0);
             this.postingUpper = newPostingFiles.remove(0);
             this.postingNumbers = newPostingFiles.remove(0);
-            Thread t1 = new Thread(new Runnable() {
+/*            Thread t1 = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     dividePostingFileNumbers();
                 }
             });
-            t1.start();
+            t1.start();*/
+            dividePostingFileNumbers();
             checkUpperCase();
-            Thread t2 = new Thread(new Runnable() {
+/*            Thread t2 = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     dividePostingFile();
                 }
-            });
-            t2.start();
+            });*/
+/*            t2.start();
             t1.join();
-            t2.join();
+            t2.join();*/
+            dividePostingFile();
             createDictionaryFile();
             createCitiesIndexFile();
             // deleteTempFiles();
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -223,8 +229,8 @@ public class Indexer {
      */
     private void createCitiesIndexFile() {
         try {
-            File cityPosting = new File(pathToSaveIndex + "/cityPosting.txt");
-            File cityDictionary = new File(pathToSaveIndex + "/cityDictionary.txt");
+            File cityPosting = new File(this.folder.getPath() + "/cityPosting.txt");
+            File cityDictionary = new File(this.folder.getPath() + "/cityDictionary.txt");
             cityPosting.createNewFile();
             cityDictionary.createNewFile();
             FileWriter postingWriter = new FileWriter(cityPosting);
@@ -295,8 +301,8 @@ public class Indexer {
     private void checkUpperCase() {
 
         try {
-            File newLower = new File(this.pathToSaveIndex + "/mergePostingLower.txt");
-            File newUpper = new File(this.pathToSaveIndex + "/mergePostingUpper.txt");
+            File newLower = new File(this.folder.toString() + "/mergePostingLower.txt");
+            File newUpper = new File(this.folder.toString() + "/mergePostingUpper.txt");
             newLower.createNewFile();
             newUpper.createNewFile();
             FileWriter writerLower = new FileWriter(newLower);
@@ -360,9 +366,9 @@ public class Indexer {
         try{
             char c = 'A';
             int lineNumber = 1;
-            File posting = new File (this.pathToSaveIndex + "/postingA.txt");
-            File newLower = new File(this.pathToSaveIndex + "/mergePostingLower.txt");
-            File newUpper = new File(this.pathToSaveIndex + "/mergePostingUpper.txt");
+            File posting = new File (this.folder.toString() + "/postingA.txt");
+            File newLower = new File(this.folder.toString() + "/mergePostingLower.txt");
+            File newUpper = new File(this.folder.toString() + "/mergePostingUpper.txt");
             BufferedReader bfUpper = new BufferedReader(new FileReader(newUpper));
             BufferedReader bfLower = new BufferedReader(new FileReader(newLower));
             FileWriter writer = new FileWriter(posting);
@@ -391,7 +397,7 @@ public class Indexer {
                 lineNumber = 1;
                 if (c == '[')
                     break;
-                posting = new File (this.pathToSaveIndex + "/posting" + c + ".txt");
+                posting = new File (this.folder.toString() + "/posting" + c + ".txt");
                 writer = new FileWriter(posting);
             }
 
@@ -407,8 +413,8 @@ public class Indexer {
         try{
             char c = '0';
             int lineNumber = 1;
-            File posting = new File (this.pathToSaveIndex + "/posting0.txt");
-            File numbers = new File(this.pathToSaveIndex + "/mergePostingNumbers.txt");
+            File posting = new File (this.folder.toString() + "/posting0.txt");
+            File numbers = new File(this.folder.toString() + "/mergePostingNumbers.txt");
             BufferedReader bf = new BufferedReader(new FileReader(numbers));
             FileWriter writer = new FileWriter(posting);
 
@@ -430,7 +436,7 @@ public class Indexer {
                 lineNumber = 1;
                 if (c == ':')
                     break;
-                posting = new File (this.pathToSaveIndex + "/posting" + c + ".txt");
+                posting = new File (this.folder.toString() + "/posting" + c + ".txt");
                 writer = new FileWriter(posting);
             }
 
@@ -460,7 +466,7 @@ public class Indexer {
 
     private void createDictionaryFile(){
         try{
-            File dictionaryFile = new File(pathToSaveIndex + "/Dictionary.txt");
+            File dictionaryFile = new File(this.folder.toString() + "/Dictionary.txt");
             dictionaryFile.createNewFile();
             FileWriter fileWriter = new FileWriter(dictionaryFile);
             fileWriter.write(dictionaryToText());
@@ -475,9 +481,10 @@ public class Indexer {
      *
      */
     public void reset(){
-        for(File file: folder.listFiles())
+        folder.delete();
+/*        for(File file: folder.listFiles())
             if (!file.isDirectory())
-                file.delete();
+                file.delete();*/
     }
 
     /**
@@ -515,7 +522,7 @@ public class Indexer {
      */
     public void setDictionary() {
         try{
-            File dictionaryFile = new File(pathToSaveIndex + "/Dictionary.txt");
+            File dictionaryFile = new File(this.folder.toString() + "/Dictionary.txt");
             BufferedReader bf = new BufferedReader(new FileReader(dictionaryFile));
             String line = bf.readLine();
             while (line != null){
@@ -556,9 +563,6 @@ public class Indexer {
         }
 
         temp[wordCount++] = line.substring(i); // last substring
-
-
-
 
         String[] result = new String[wordCount];
         System.arraycopy(temp, 0, result, 0, wordCount);
@@ -614,6 +618,10 @@ public class Indexer {
 
     private StringBuilder parsePopulation(String tmpNum){
         return null;
+    }
+
+    public HashMap<String, ArrayList<CityDetails>> getCitiesIndex() {
+        return citiesIndex;
     }
 
     private class RunnableExternalSort implements Runnable{

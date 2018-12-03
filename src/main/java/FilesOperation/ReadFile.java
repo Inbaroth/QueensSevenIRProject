@@ -14,6 +14,7 @@ public class ReadFile {
 
     File folder;
     Parse parser;
+    String pathToParse;
 
 
 
@@ -25,10 +26,12 @@ public class ReadFile {
 
     private void listFilesForFolder(File folder) {
         for (File fileEntry : folder.listFiles()) {
+            if (fileEntry.getName().equals(pathToParse + "/stop-words.txt"))
+                continue;
             if (fileEntry.isDirectory()) {
                 listFilesForFolder(fileEntry);
             } else {
-                System.out.println(fileEntry.getName());
+                //System.out.println(fileEntry.getName());
                 Document document = null;
                 try {
                     document = Jsoup.parse(new String (Files.readAllBytes(fileEntry.toPath())));

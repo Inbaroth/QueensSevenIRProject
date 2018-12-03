@@ -62,7 +62,7 @@
             <Font size="14.0" />
          </font>
       </Button>
-      <Button fx:id="btn_UploadDictToMem" disable="true" layoutX="184.0" layoutY="416.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="216.0" text="Upload Dictionary to memory">
+      <Button fx:id="btn_UploadDictToMem" disable="true" layoutX="184.0" layoutY="416.0" onAction="#uploadDictionaryToMem" mnemonicParsing="false" prefHeight="30.0" prefWidth="216.0" text="Upload Dictionary to memory">
          <font>
             <Font size="14.0" />
          </font>

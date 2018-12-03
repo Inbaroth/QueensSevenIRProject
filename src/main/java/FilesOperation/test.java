@@ -16,32 +16,32 @@ public class test{
         String text3 = getText3();
         String text4 = getText4();
         String text5 = getText5();
-        Parse p = new Parse("",false);
-        p.parsing("1",line1,"1",0);
+        //Parse p = new Parse("",false);
+       // p.parsing("1",line1,"1",0);
         long startTime = System.nanoTime();
 //        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus",false);
 //          ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FT941",false);
-//          ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus2","src/main/resources",false);
+        ReadFile reader1 = new ReadFile("C:\\Users\\Inbar\\OneDrive\\מסמכים\\סמסטר ה'\\איחזור מידע\\פרויקט חלק א'\\corpus","src/main/resources",false);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime)/1000000;
         System.out.println("*******************");
 
 
-        ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails,Integer>> map = p.getTermsMap();
+/*        ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails,Integer>> map = p.getTermsMap();
         for (Map.Entry<String,ConcurrentHashMap<DocumentDetails,Integer>> entry:map.entrySet()) {
             System.out.print(entry.getKey()+ ": ");
                 for (Map.Entry<DocumentDetails, Integer> doc : entry.getValue().entrySet()) {
                     System.out.print("<" + doc.getKey() + " , " + doc.getValue() + "> -> ");
                 }
                 System.out.println();
-        }
+        }*/
 
         duration = duration/60000;
         System.out.println(duration + " min");
 //        System.out.println("Number of tokens: " + reader.getParser().getTermsMap().size());
 //        System.out.println(reader1.getParser().getIndexer().dictionary.size());
-//        System.out.println(reader1.getParser().getIndexer().getDictionary().size());
-
+        System.out.println("Number of tokens: " + reader1.getParser().getIndexer().getDictionary().size());
+        System.out.println("Number of cities: " + reader1.getParser().getIndexer().getCitiesIndex().size());
     }
 
     private static String getText() {

@@ -38,9 +38,9 @@ public class Parse {
     /**
      * Constructor
      */
-    public Parse(String pathToSaveIndex, boolean isStemming) {
+    public Parse(String pathToParse, String pathToSaveIndex, boolean isStemming) {
         this.termsMap = new ConcurrentHashMap<>();
-        this.indexer = new Indexer(pathToSaveIndex);
+        this.indexer = new Indexer(pathToSaveIndex, isStemming);
         //this.documentList = new SortedList<String>(Comparator);
         this.isStemming = isStemming;
         if (isStemming)
@@ -61,7 +61,7 @@ public class Parse {
         threadPoolExecutor.setCorePoolSize(threadPoolSize);
 
         // load stop words into dictionary
-        File file = new File("src/main/resources/stop words.txt");
+        File file = new File(pathToParse + "/stop-words.txt");
         try {
             BufferedReader bf = new BufferedReader(new FileReader(file));
             String line = bf.readLine();
@@ -1003,15 +1003,15 @@ public class Parse {
     /**
      * This function send the terms map dictionary to the Indexer object for continuous progress
      */
-    public synchronized void moveToIndexer() {
+    public void moveToIndexer() {
         // if needed to do stem
         if (isStemming) {
             stemmer.stemMap(this.termsMap);
         }
-        threadPoolExecutor.execute(new RunnableBuildIndex());
+        //threadPoolExecutor.execute(new RunnableBuildIndex());
 /*        Thread thread = new Thread(new RunnableBuildIndex());
         thread.start();*/
-        //indexer.buildIndex(termsMap);
+        indexer.buildIndex(termsMap);
 
     }
 
