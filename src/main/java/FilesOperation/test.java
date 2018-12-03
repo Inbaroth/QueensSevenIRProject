@@ -37,8 +37,8 @@ public class test{
         duration = duration/60000;
         System.out.println(duration + " min");
 //        System.out.println("Number of tokens: " + reader.getParser().getTermsMap().size());
+//        System.out.println(reader1.getParser().getIndexer().dictionary.size());
         System.out.println(reader1.getParser().getIndexer().getDictionary().size());
-
 
     }
 

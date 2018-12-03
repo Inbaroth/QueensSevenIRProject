@@ -25,7 +25,7 @@ public class Parse {
     // String - term
     ConcurrentHashMap <String, ConcurrentHashMap<DocumentDetails,Integer>> termsMap;
     HashSet<String> stopWords;
-    ArrayList<String> corpusLanguages;
+    TreeSet<String> corpusLanguages;
     HashMap<String,String> monthDictionary;
     HashMap<String,String> numbersDictionary;
     HashMap<String,String> pricesDictionary;
@@ -33,7 +33,7 @@ public class Parse {
     HashSet<String> dollarSet;
     int maxTermFrequency = 0;
     int numberOfDistinctWords = 0;
-    ThreadPoolExecutor threadPoolExecutor;
+    public static ThreadPoolExecutor threadPoolExecutor;
     int numberOfDocuments = 0;
 
 
@@ -49,7 +49,7 @@ public class Parse {
             stemmer = new Stemmer();
         this.stopWords = new HashSet<>();
 
-        this.corpusLanguages = new ArrayList<>();
+        this.corpusLanguages = new TreeSet<>();
         // create and fill dictionaries
         this.monthDictionary = new HashMap<>();
         this.numbersDictionary = new HashMap<>();
@@ -930,9 +930,8 @@ public class Parse {
      *
      * @return the language array list sorted
      */
-    public ArrayList<String> getCorpusLanguages() {
-        Collections.sort(corpusLanguages);
-        return corpusLanguages;
+    public TreeSet<String> getCorpusLanguages() {
+            return corpusLanguages;
     }
 
     /**
@@ -943,10 +942,10 @@ public class Parse {
         if (isStemming) {
             stemmer.stemMap(this.termsMap);
         }
-        threadPoolExecutor.execute(new RunnableBuildIndex());
+        //threadPoolExecutor.execute(new RunnableBuildIndex());
 /*        Thread thread = new Thread(new RunnableBuildIndex());
         thread.start();*/
-        //indexer.buildIndex(termsMap);
+        indexer.buildIndex(termsMap);
 
     }
 
