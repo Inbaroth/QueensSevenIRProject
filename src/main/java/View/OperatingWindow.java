@@ -1,6 +1,7 @@
 package View;
 
 import Controller.Controller;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -87,7 +88,9 @@ public class OperatingWindow extends View{
             btn_DisplayDictionary.setDisable(false);
             btn_UploadDictToMem.setDisable(false);
             btn_resetAll.setDisable(false);
-            cb_languageSelect.setItems(controller.getDocumentsLanguages());
+            ObservableList<String> languages = controller.getDocumentsLanguages();
+            cb_languageSelect.setItems(languages);
+            cb_languageSelect.setVisibleRowCount(languages.size()/2);
         }
     }
 
@@ -98,19 +101,21 @@ public class OperatingWindow extends View{
         ((Button) alert.getDialogPane().lookupButton(ButtonType.CANCEL)).setText("No");
         alert.setContentText("Are you sure you want to reset all memory?");
         Optional<ButtonType> result = alert.showAndWait();
-        if (result.get() == ButtonType.OK)
+        if (result.get() == ButtonType.OK) {
             // ... user chose OK
             controller.resetAll();
-        else
+            alert("All memory have been reset", Alert.AlertType.INFORMATION);
+        }else
             alert.close();
     }
 
 
     public void displayDictionary(ActionEvent actionEvent){
-        newStage("DictionaryDisplay.fxml", "", dictionaryDisplay, 464, 486);
+        newStage("DictionaryDisplay.fxml", "", dictionaryDisplay, 350, 560, controller);
     }
 
     public void uploadDictionaryToMem(ActionEvent actionEvent){
         controller.uploadDictionaryToMem();
+        alert("The dictionary have been uploaded to memory." , Alert.AlertType.INFORMATION);
     }
 }

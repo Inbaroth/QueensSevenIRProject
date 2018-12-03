@@ -41,17 +41,16 @@ public class Controller extends Observable implements Observer {
 
 
     public ObservableList<String> getDocumentsLanguages(){
-        ArrayList<String> docsLang = model.getDocumentsLanguages();
+
+
+        TreeSet<String> docsLang = model.getDocumentsLanguages();
         ObservableList<String> docLangObservable = FXCollections.observableArrayList(docsLang);
 
         //HERE
 
-        TreeSet<String> Lang = new TreeSet<>();
-        ObservableList<String> docLangObserv = FXCollections.observableArrayList(Lang);
-        ObservableSet<String> docLangObse= FXCollections.observableSet(Lang);
 
-
-
+        //ObservableList<String> docLangObserv = FXCollections.observableArrayList(Lang);
+        //ObservableSet<String> docLangObservable= FXCollections.observableSet(docsLang);
 
         return docLangObservable;
     }

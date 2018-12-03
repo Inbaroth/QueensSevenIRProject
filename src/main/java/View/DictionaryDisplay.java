@@ -19,6 +19,7 @@ public class DictionaryDisplay extends View {
 
 
     private void setText(){
-        ta_dictionaryDisplay.setText(controller.dictionaryToString());
+        if(controller.dictionaryToString()!=null)
+            ta_dictionaryDisplay.setText(controller.dictionaryToString());
     }
 }

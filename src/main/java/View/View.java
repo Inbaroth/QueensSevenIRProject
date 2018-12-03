@@ -35,7 +35,7 @@ public class View implements Observer {
     }
 
     public void Start(ActionEvent actionEvent) {
-        newStage("OperatingWindow.fxml", "", operatingWindow, 670, 490);
+        newStage("OperatingWindow.fxml", "", operatingWindow, 670, 490, controller);
     }
 
 
@@ -62,7 +62,7 @@ public class View implements Observer {
         });
     }
     //create a new stage
-    protected void newStage(String fxmlName,String title, View windowName, int width, int height){
+    protected void newStage(String fxmlName,String title, View windowName, int width, int height, Controller controller){
         /*FXMLLoader fxmlLoader = new
                 FXMLLoader(getClass().getResource(fxmlName));*/
         FXMLLoader fxmlLoader = new FXMLLoader();
