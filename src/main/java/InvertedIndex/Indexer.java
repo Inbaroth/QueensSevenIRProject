@@ -407,7 +407,7 @@ public class Indexer {
      *
      * @param dictionary
      */
-    public void setDictionary(HashMap<String, TermDetails> dictionary) {
+    public void setDictionary() {
         try{
             File dictionaryFile = new File(pathToSaveIndex + "/Dictionary.txt");
             BufferedReader bf = new BufferedReader(new FileReader(dictionaryFile));

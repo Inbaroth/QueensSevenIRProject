@@ -5,6 +5,7 @@ import javafx.collections.transformation.SortedList;
 
 import java.util.ArrayList;
 import java.util.Observable;
+import java.util.TreeSet;
 
 public class Model extends Observable {
     private ReadFile readFile;
@@ -44,7 +45,7 @@ public class Model extends Observable {
      * this func will return list of all documents languages sorted
      * @return
      */
-    public ArrayList<String> getDocumentsLanguages() {
+    public TreeSet<String> getDocumentsLanguages() {
        return readFile.getParser().getCorpusLanguages();
     }
 
@@ -61,27 +62,15 @@ public class Model extends Observable {
     public void uploadDictionaryToMem() {
     //create a func which will take the dictionary from path where posting files and dict is saved
     //and upload the dict itself to main memory
+        readFile.getParser().getIndexer().setDictionary();
     }
-
-    //DO THIS:
-    //create a sorted list of the languages od the documents have been indexed
-    //while parsing add each new language to the list and sort it by the A-Z order
-    //mark each doc with his own language so it can be retrieve easily
-    // then the func under should return this list of document languages
-    //then the choice box needed to set all this list before "IndexOperations" window appearing
-
-    //public SortedList getDocumentsLanguages() {
-        //CHANGEEEEEEEEEEE CHANGE THIS HERE
-        //SortedList<String>  languages= new SortedList<String>();
-        //return languages;
-    //}
 
     public int getNumberOfDocs(){
        return readFile.getParser().getNumberOfDocuments();
     }
 
     public int getNumberOfTerms(){
-        return readFile.getParser().getIndexer().dictionary.size();
+        return readFile.getParser().getIndexer().getDictionary().size();
     }
 
     public double getTotalTimeToIndex(){

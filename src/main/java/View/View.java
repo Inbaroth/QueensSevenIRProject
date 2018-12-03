@@ -51,7 +51,8 @@ public class View implements Observer {
                     // ... user chose OK
                     // Close program
                     //enable start button when return to primary stage (home window)
-                    btn_start.setDisable(false);
+                    if(btn_start!=null)
+                        btn_start.setDisable(false);
                 } else {
                     // ... user chose CANCEL or closed the dialog
                     windowEvent.consume();

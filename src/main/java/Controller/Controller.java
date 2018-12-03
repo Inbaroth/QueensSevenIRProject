@@ -3,12 +3,14 @@ package Controller;
 import Model.Model;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.collections.transformation.SortedList;
 import javafx.scene.control.Alert;
 
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.TreeSet;
 
 public class Controller extends Observable implements Observer {
 
@@ -41,6 +43,16 @@ public class Controller extends Observable implements Observer {
     public ObservableList<String> getDocumentsLanguages(){
         ArrayList<String> docsLang = model.getDocumentsLanguages();
         ObservableList<String> docLangObservable = FXCollections.observableArrayList(docsLang);
+
+        //HERE
+
+        TreeSet<String> Lang = new TreeSet<>();
+        ObservableList<String> docLangObserv = FXCollections.observableArrayList(Lang);
+        ObservableSet<String> docLangObse= FXCollections.observableSet(Lang);
+
+
+
+
         return docLangObservable;
     }
 
