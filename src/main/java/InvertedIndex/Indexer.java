@@ -418,6 +418,7 @@ public class Indexer {
                 termDetails.setNumberOfApperance(Integer.valueOf(splitLine[1]));
                 termDetails.setRowNumber(Integer.valueOf(splitLine[2]));
                 dictionary.put(splitLine[0],termDetails);
+
             }
         } catch (IOException e) {
             e.printStackTrace();
