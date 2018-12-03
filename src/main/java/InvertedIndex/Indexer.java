@@ -1,6 +1,7 @@
 package InvertedIndex;
 
 import FilesOperation.DocumentDetails;
+import FilesOperation.Parse;
 import com.google.code.externalsorting.ExternalSort;
 import java.io.*;
 import java.nio.charset.Charset;
@@ -8,6 +9,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -119,6 +121,9 @@ public class Indexer {
      * This method merge five posting files which created by buildIndex() function in every call
      */
     public void mergePostingFile() {
+        try {
+        Parse.threadPoolExecutor.shutdown();
+        Parse.threadPoolExecutor.awaitTermination(Long.MAX_VALUE,TimeUnit.NANOSECONDS);
         // create a new merge posting file which will be contains all the files in the filesList field
         String pathForNumbers = this.pathToSaveIndex + "/mergePostingNumbersTemp.txt";
         String pathForLowerCase = this.pathToSaveIndex + "/mergePostingLowerCaseTemp.txt";
@@ -126,7 +131,7 @@ public class Indexer {
         this.postingNumbers = new File(pathForNumbers);
         this.postingLower = new File(pathForLowerCase);
         this.postingUpper = new File(pathForUpperCase);
-        try {
+
             postingNumbers.createNewFile();
             postingLower.createNewFile();
             postingUpper.createNewFile();
@@ -156,7 +161,7 @@ public class Indexer {
             dividePostingFile();
             dividePostingFileNumbers();
             // deleteTempFiles();
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
 
@@ -218,29 +223,38 @@ public class Indexer {
                 String [] lineUpperSplit = lineUpper.split(" ");
                 String [] lineLowerSplit = lineLower.split(" ");
                 // if line in upperCase file is bigger than line in lowerCase file, read the next upper line
-                if (lineUpperSplit[0].compareTo(lineLowerSplit[0]) < 0){
+                if (lineUpperSplit[0].toLowerCase().compareTo(lineLowerSplit[0]) < 0){
                     writerUpper.write(lineUpper);
+                    //writerLower.write(lineLower);
                     lineUpper = bfUpper.readLine();
+                    //lineLower = bfLower.readLine();
+                    writerUpper.write("\n");
+
                     continue;
                 }
                 // if line in upperCase file is smaller than line in lowerCase file, read the next lower line
-                if (lineUpperSplit[0].compareTo(lineLowerSplit[0]) > 0){
+                if (lineUpperSplit[0].toLowerCase().compareTo(lineLowerSplit[0]) > 0){
                     writerLower.write(lineLower);
+//                    writerUpper.write(lineUpper);
                     lineLower = bfLower.readLine();
+//                    lineUpper = bfUpper.readLine();
+                    writerLower.write("\n");
                     continue;
                 }
                 // if the term exist also in upper case, copy the content of the line to the new lower words posting file
                 if (lineUpperSplit[0].toLowerCase().equals(lineLowerSplit[0])){
                     lineUpper = lineUpper.substring(lineUpperSplit[0].length());
+                    writerLower.write(lineLower);
                     writerLower.write(lineUpper);
                     int numberOfAppearanceUpper = dictionary.get(lineUpperSplit[0]).getNumberOfAppearance();
                     int numberOfAppearanceLower = dictionary.get(lineLowerSplit[0]).getNumberOfAppearance();
                     dictionary.get(lineLowerSplit[0]).setNumberOfApperance(numberOfAppearanceLower + numberOfAppearanceUpper);
                     dictionary.remove(lineUpperSplit[0]);
+                    writerLower.write("\n");
                 }
 
-                writerLower.write("\n");
-                writerUpper.write("\n");
+                //writerLower.write("\n");
+                //writerUpper.write("\n");
                 lineUpper = bfUpper.readLine();
                 lineLower = bfLower.readLine();
             }
@@ -317,9 +331,9 @@ public class Indexer {
                     line = bf.readLine();
                 }
                 while (line != null && line.charAt(0) == c){
-                    writer.write(line.substring(line.indexOf(" ")));
+                    writer.write(line.substring(line.indexOf("<")));
                     writer.write("\n");
-                    String key = line.substring(0,line.indexOf(" "));
+                    String key = line.substring(0,line.indexOf("<") - 1);
                     dictionary.get(key).setRowNumber(lineNumber);
                     lineNumber++;
                     line = bf.readLine();
@@ -405,9 +419,8 @@ public class Indexer {
 
     /**
      *
-     * @param dictionary
      */
-    public void setDictionary(HashMap<String, TermDetails> dictionary) {
+    public void setDictionary() {
         try{
             File dictionaryFile = new File(pathToSaveIndex + "/Dictionary.txt");
             BufferedReader bf = new BufferedReader(new FileReader(dictionaryFile));
