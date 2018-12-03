@@ -3,13 +3,15 @@ package InvertedIndex;
 import FilesOperation.DocumentDetails;
 import FilesOperation.Parse;
 import com.google.code.externalsorting.ExternalSort;
+
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -21,12 +23,14 @@ public class Indexer {
     private Vector<File> filesListUpperCase;
     private File folder;
     private HashMap<String,TermDetails> dictionary;
+    private HashMap<String, ArrayList<CityDetails>> citiesIndex;
     File postingNumbers;
     File postingLower;
     File postingUpper;
 
     /**
-     * Constructor
+     *
+     * @param pathToSaveIndex
      */
     public Indexer(String pathToSaveIndex) {
         this.pathToSaveIndex = pathToSaveIndex;
@@ -35,6 +39,7 @@ public class Indexer {
         this.filesListUpperCase = new Vector<>();
         this.filesListNumbers = new Vector<>();
         this.dictionary = new HashMap<>();
+        this.citiesIndex = new HashMap<>();
     }
 
     /**
@@ -81,7 +86,12 @@ public class Indexer {
         } catch (Exception e) { }
     }
 
-
+    /**
+     *
+     * @param writer
+     * @param key
+     * @param entry
+     */
     private void writeToPostingFile(FileWriter writer,String key, Map.Entry<String, ConcurrentHashMap<DocumentDetails, Integer>> entry) {
         try {
             writer.write(key + " ");
@@ -101,11 +111,27 @@ public class Indexer {
                 if (!dictionary.containsKey(key)){
                     TermDetails termDetails = new TermDetails();
                     termDetails.setNumberOfApperance(doc.getValue());
+                    termDetails.setDocumentFrequency(entry.getValue().size());
                     dictionary.put(key,termDetails);
                 }
                 else{
                     int numberOfAppearance = dictionary.get(key).getNumberOfAppearance();
+                    int df = dictionary.get(key).getDocumentFrequency();
                     dictionary.get(key).setNumberOfApperance(numberOfAppearance + doc.getValue());
+                    dictionary.get(key).setDocumentFrequency(entry.getValue().size() + df);
+                }
+                if (documentDetails.getCityName() != null){
+                    CityDetails cityDetails = new CityDetails(documentDetails.getCityName(), documentDetails.getDocId());
+                    //getCityDetails(documentDetails.getCityName(),cityDetails);
+                    cityDetails.setListOfPositions(documentDetails.getListOfPositions());
+                    if (!citiesIndex.containsKey(documentDetails.getCityName())){
+                        ArrayList <CityDetails> list = new ArrayList();
+                        list.add(cityDetails);
+                        citiesIndex.put(documentDetails.getCityName(),list);
+                    }
+                    else{
+                        citiesIndex.get(documentDetails.getCityName()).add(cityDetails);
+                    }
                 }
             }
             writer.write("\n");
@@ -119,7 +145,8 @@ public class Indexer {
     public void mergePostingFile() {
         try {
         Parse.threadPoolExecutor.shutdown();
-        Parse.threadPoolExecutor.awaitTermination(Long.MAX_VALUE,TimeUnit.NANOSECONDS);
+        while (Parse.threadPoolExecutor.getActiveCount() != 0);
+        //Parse.threadPoolExecutor.awaitTermination(Long.MAX_VALUE,TimeUnit.NANOSECONDS);
         // create a new merge posting file which will be contains all the files in the filesList field
         String pathForNumbers = this.pathToSaveIndex + "/mergePostingNumbersTemp.txt";
         String pathForLowerCase = this.pathToSaveIndex + "/mergePostingLowerCaseTemp.txt";
@@ -127,7 +154,6 @@ public class Indexer {
         this.postingNumbers = new File(pathForNumbers);
         this.postingLower = new File(pathForLowerCase);
         this.postingUpper = new File(pathForUpperCase);
-
             postingNumbers.createNewFile();
             postingLower.createNewFile();
             postingUpper.createNewFile();
@@ -180,8 +206,40 @@ public class Indexer {
             t1.join();
             t2.join();
             createDictionaryFile();
+            createCitiesIndexFile();
             // deleteTempFiles();
         } catch (Exception e) { }
+
+    }
+
+    /**
+     *
+     */
+    private void createCitiesIndexFile() {
+        try {
+            File cityPosting = new File(pathToSaveIndex + "/cityPosting.txt");
+            File cityDictionary = new File(pathToSaveIndex + "/cityDictionary.txt");
+            cityPosting.createNewFile();
+            cityDictionary.createNewFile();
+            FileWriter postingWriter = new FileWriter(cityPosting);
+            FileWriter dictionaryWriter = new FileWriter(cityDictionary);
+            int lineNumber = 0;
+            for (Map.Entry<String, ArrayList<CityDetails>> entry : citiesIndex.entrySet()) {
+                dictionaryWriter.write(entry.getKey() + " " + lineNumber);
+                for (CityDetails cityDetails : entry.getValue()) {
+                    postingWriter.write("<DOC>");
+                    postingWriter.write(cityDetails.getDocId() + "," + cityDetails.getCountryName() + "," + cityDetails.getCurrency() + "," + cityDetails.getPopulationSize());
+                    for (Integer position : cityDetails.getListOfPositions()) {
+                        postingWriter.write(position + " ");
+                    }
+                }
+                postingWriter.write("</DOC>");
+                postingWriter.write("\n");
+                dictionaryWriter.write("\n");
+            }
+        } catch (Exception e) {}
+
+
 
     }
 
@@ -369,6 +427,10 @@ public class Indexer {
         } catch (Exception e) { }
 
     }
+
+    /**
+     *
+     */
     public void deleteTempFiles(){
         for (File fileEntry : folder.listFiles()) {
             if (fileEntry.isFile()) {
@@ -486,6 +548,56 @@ public class Indexer {
         System.arraycopy(temp, 0, result, 0, wordCount);
 
         return result;
+    }
+
+
+    /**
+     *
+     * @param cityName
+     * @return
+     */
+    private void getCityDetails(String cityName, CityDetails cityDetails){
+        String api = "http://getcitydetails.geobytes.com/GetCityDetails?fqcn=";
+        URL url;
+        try {
+            url = new URL(api + cityName);
+            URLConnection connection = url.openConnection();
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(connection.getInputStream()));
+            String line = br.readLine();
+            String currency = line.substring(line.indexOf("\"geobytescurrencycode\":")+ 24,line.indexOf("geobytestitle")-3);
+            String countryName = line.substring(line.indexOf("\"geobytescountry\":")+ 19,line.indexOf("geobytesregionlocation")-3);
+            String populationSize = line.substring(line.indexOf("\"geobytespopulation\":")+ 22,line.indexOf("geobytesnationalityplural")-3);
+            StringBuilder temp = new StringBuilder(populationSize);
+            if (populationSize.length() >= 4 && populationSize.length() < 7){
+                temp.insert(populationSize.length() - 3, ".");
+                temp.delete(populationSize.indexOf(".") + 3, populationSize.length());
+                temp.append("K");
+            }
+            else if (populationSize.length() >=7 && populationSize.length() < 9){
+                temp.insert(populationSize.length() - 6,".");
+                temp.delete(populationSize.indexOf(".") + 3, populationSize.length());
+                temp.append("M");
+
+            }
+            else if (populationSize.length() >=10){
+                temp.insert(populationSize.length() - 9,".");
+                temp.delete(populationSize.indexOf(".") + 3, populationSize.length());
+                temp.append("B");
+
+            }
+            populationSize = temp.toString();
+            cityDetails.setCountryName(countryName);
+            cityDetails.setCurrency(currency);
+            cityDetails.setPopulationSize(populationSize);
+
+
+        } catch (Exception e) {
+        }
+    }
+
+    private StringBuilder parsePopulation(String tmpNum){
+        return null;
     }
 
     private class RunnableExternalSort implements Runnable{

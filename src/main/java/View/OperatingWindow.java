@@ -35,7 +35,7 @@ public class OperatingWindow extends View{
             {
                 JButton b = new JButton();
                 JFileChooser f = new JFileChooser();
-                f.setPreferredSize(new Dimension(1500,1000));
+                //f.setPreferredSize(new Dimension(1500,1000));
                 f.setDialogTitle("File chooser");
                 setFileChooserFont(f.getComponents());
                 f.setFileSelectionMode(JFileChooser.FILES_ONLY);

@@ -1,11 +1,6 @@
 package FilesOperation;
 
 import InvertedIndex.Indexer;
-import javafx.beans.property.ListProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,12 +24,15 @@ public class Parse {
     HashMap<String,String> monthDictionary;
     HashMap<String,String> numbersDictionary;
     HashMap<String,String> pricesDictionary;
-    HashSet<String> precentSet;
+    HashMap<String,String> weightDictionary;
+    HashSet<String> percentSet;
     HashSet<String> dollarSet;
     int maxTermFrequency = 0;
     int numberOfDistinctWords = 0;
+    int position = -1;
     public static ThreadPoolExecutor threadPoolExecutor;
     int numberOfDocuments = 0;
+    String cityname;
 
 
     /**
@@ -48,14 +46,14 @@ public class Parse {
         if (isStemming)
             stemmer = new Stemmer();
         this.stopWords = new HashSet<>();
-
         this.corpusLanguages = new TreeSet<>();
         // create and fill dictionaries
         this.monthDictionary = new HashMap<>();
         this.numbersDictionary = new HashMap<>();
         this.pricesDictionary = new HashMap<>();
-        this.precentSet = new HashSet<>();
+        this.percentSet = new HashSet<>();
         this.dollarSet = new HashSet<>();
+        this.weightDictionary = new HashMap<>();
         fillMonthDictionary();
 
         int threadPoolSize = Runtime.getRuntime().availableProcessors() * 2;
@@ -127,18 +125,17 @@ public class Parse {
         // fill prices dictionary
         pricesDictionary.put("million", " M Dollars");
         pricesDictionary.put("m", " M Dollars");
-        pricesDictionary.put("Billion", "000 M Dollars");
         pricesDictionary.put("billion", "000 M Dollars");
         pricesDictionary.put("bn", "000 M Dollars");
         pricesDictionary.put("trillion", "000000 M Dollars");
         // fill percent set
-        precentSet.add("percent");
-        precentSet.add("Percent");
-        precentSet.add("Percentage");
-        precentSet.add("percents");
-        precentSet.add("percentages");
-        precentSet.add("Percents");
-        precentSet.add("Percentages");
+        percentSet.add("percent");
+        percentSet.add("Percent");
+        percentSet.add("Percentage");
+        percentSet.add("percents");
+        percentSet.add("percentages");
+        percentSet.add("Percents");
+        percentSet.add("Percentages");
         //Dollars|Dollar|dollar|dollars
         dollarSet.add("Dollars");
         dollarSet.add("Dollar");
@@ -148,7 +145,13 @@ public class Parse {
         dollarSet.add("Dollar,");
         dollarSet.add("dollar,");
         dollarSet.add("dollars,");
-
+        //
+        weightDictionary.put("grams", " gr");
+        weightDictionary.put("kilograms", " kgs");
+        weightDictionary.put("tons", " tons");
+        weightDictionary.put("grams,", " tons");
+        weightDictionary.put("kilograms,", " tons");
+        weightDictionary.put("tons,", " tons");
 
 
     }
@@ -176,6 +179,7 @@ public class Parse {
         String cityName = StringUtils.substringBetween(docText, "<f p=\"104\">\n ","</f> \n");
         // get the language of the document and adding it to the corpusLanguage hash set
         String language = StringUtils.substringBetween(docText, "<f p=\"105\">\n ","</f>");
+        String date = StringUtils.substringBetween(docText,"<data1>\n", "</date1>");
         if (cityName != null){
             cityName = cityName.trim();
             int indexOfSpace = cityName.indexOf(" ");
@@ -183,12 +187,15 @@ public class Parse {
                 cityName = cityName.substring(0,indexOfSpace);
             documentDetails.setCityName(cityName);
             updateTerm(cityName.toUpperCase(),documentDetails);
+            this.cityname = cityName;
         }
         if (language != null){
             language = language.trim();
             corpusLanguages.add(language);
             documentDetails.setLanguage(language);
         }
+        if (date != null)
+            documentDetails.setDate(date);
 
         Document document = Jsoup.parse(docText);
         String text = document.getElementsByTag("TEXT").text();
@@ -207,6 +214,8 @@ public class Parse {
         documentDetails.setNumberOfDistinctWords(numberOfDistinctWords);
         maxTermFrequency = 0;
         numberOfDistinctWords = 0;
+        this.cityname = null;
+        this.position = -1;
 
     }
 
@@ -239,6 +248,7 @@ public class Parse {
             }
         }
         for (int i = 0; i < wordsInDoc.length; i++) {
+            this.position++;
 
             if (wordsInDoc[i].length() == 0 || punctuations.contains(wordsInDoc[i]) || wordsInDoc[i].contains("--"))
                 continue;
@@ -260,7 +270,8 @@ public class Parse {
 
             //check if the word in the array ends with ','
             boolean isPair = true;
-            if (wordsInDoc[i].endsWith(",")) {
+            if (wordsInDoc[i].endsWith(",") || (i + 1 < wordsInDoc.length && wordsInDoc[i+1].startsWith("("))
+                    || wordsInDoc[i].endsWith(")")) {
                 isPair = false;
                 wordsInDoc[i] = wordsInDoc[i].substring(0, wordsInDoc[i].length() - 1);
                 if (wordsInDoc[i].endsWith(","))
@@ -269,12 +280,10 @@ public class Parse {
 
             // remove () if exist in the beginning and end of the word
             // like (WORD)
-            if (wordsInDoc[i].startsWith("(") && wordsInDoc[i].endsWith(")")){
-                if (wordsInDoc[i].endsWith(")"))
-                    wordsInDoc[i] = wordsInDoc[i].substring(1,wordsInDoc[i].length() - 1);
-                else
-                    wordsInDoc[i] = wordsInDoc[i].substring(1);
-            }
+            if (wordsInDoc[i].startsWith("("))
+                wordsInDoc[i] = wordsInDoc[i].substring(1);
+            if (wordsInDoc[i].endsWith(")"))
+                wordsInDoc[i] = wordsInDoc[i].substring(1,wordsInDoc[i].length() - 1);
 
 
             // check if the string in wordInDoc[i] contains only letters
@@ -501,13 +510,25 @@ public class Parse {
                         continue;
                     }
 
+                    //number grams/kilograms/tons
+                    if (i + 1 < wordsInDoc.length && !isDollar && weightDictionary.containsKey(wordsInDoc[i + 1])) {
+                        numberTerm.add(numTerm);
+                        numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
+                        //call to func which deal with numbers
+                        StringBuilder finalTerm = parseNumbers(false, numberTerm, twoNumsCells);
+                        numberTerm.clear();
+                        updateTerm(finalTerm.toString(), documentDetailes);
+                        i = i + 1;
+                        continue;
+                    }
+
                     //price m/bn/fraction Dollars/Dollar/dollar/dollars
                     if (i + 2 < wordsInDoc.length && !isDollar && dollarSet.contains(wordsInDoc[i + 2])) {
                         if (pricesDictionary.containsKey(wordsInDoc[i + 1]) || twoNumsCells) {
                             numberTerm.add(numTerm);
                             numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
                             //update dic with Dollars/Dollar/dollar/dollars
-                            updateTerm(wordsInDoc[i + 1].toLowerCase(), documentDetailes);
+                            updateTerm(wordsInDoc[i + 1], documentDetailes);
                             //call to func which deal with prices
                             StringBuilder finalTerm = parseNumbers(true, numberTerm, twoNumsCells);
                             numberTerm.clear();
@@ -516,13 +537,28 @@ public class Parse {
                             continue;
                         }
                     }
+                    // number million/billion/trillion/fraction grams/kilograms/tons
+                    if (i + 2 < wordsInDoc.length && !isDollar && weightDictionary.containsKey(wordsInDoc[i + 2])) {
+                        String currWord = Character.toUpperCase(wordsInDoc[i+1].charAt(0)) + wordsInDoc[i+1].substring(1);
+                        if (numbersDictionary.containsKey(currWord) || twoNumsCells) {
+                            numberTerm.add(numTerm);
+                            numberTerm.add(new StringBuilder(currWord));
+                            numberTerm.add(new StringBuilder(wordsInDoc[i+2]));
+                            //call to func which deal with numbers
+                            StringBuilder finalTerm = parseNumbers(false, numberTerm, twoNumsCells);
+                            numberTerm.clear();
+                            updateTerm(finalTerm.toString(), documentDetailes);
+                            i = i + 2;
+                            continue;
+                        }
+                    }
 
                     //price million/billion/trillion U.S. Dollars/Dollar/dollar/dollars
-                    else if (i + 3 < wordsInDoc.length && !isDollar && pricesDictionary.containsKey(wordsInDoc[i + 1]) && wordsInDoc[i + 2].equals("U.S.") && pricesDictionary.containsKey(wordsInDoc[i + 3])) {
+                    else if (i + 3 < wordsInDoc.length && !isDollar && pricesDictionary.containsKey(wordsInDoc[i + 1]) && wordsInDoc[i + 2].equals("U.S.") && dollarSet.contains(wordsInDoc[i + 3])) {
                         numberTerm.add(numTerm);
                         numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
                         //update dic with Dollars/Dollar/dollar/dollars
-                        updateTerm(wordsInDoc[i + 1].toLowerCase(), documentDetailes);
+                        updateTerm(wordsInDoc[i + 1], documentDetailes);
                         //call to func which deal with prices
                         StringBuilder finalTerm = parseNumbers(true, numberTerm, twoNumsCells);
                         numberTerm.clear();
@@ -549,7 +585,7 @@ public class Parse {
                     }
 
                     //if appears percent / percentage / Percent / Percentage /  percents / percentages / Percents / Percentages at the cell after
-                    if (cellNum + 1 < wordsInDoc.length && precentSet.contains(wordsInDoc[cellNum + 1])) {
+                    if (cellNum + 1 < wordsInDoc.length && percentSet.contains(wordsInDoc[cellNum + 1])) {
                         if (twoNumsCells) {
                             i = i + 1;
                         }
@@ -667,11 +703,24 @@ public class Parse {
         StringBuilder finalTerm =  new StringBuilder();
         while(true) {
             if (!twoNumsCells && priceTermSize >= 2) {
+                String key = numberTerm.elementAt(1).toString();
                 if (isPrice) {
-                    finalTerm.append(numberTerm.elementAt(0)).append(pricesDictionary.get(numberTerm.elementAt(1).toString()));
+                    if (pricesDictionary.containsKey(key))
+                        finalTerm.append(numberTerm.elementAt(0)).append(pricesDictionary.get(key));
+                    else if (dollarSet.contains(key))
+                        finalTerm.append(numberTerm.elementAt(0)).append(" Dollars");
                 }
                 else{
-                    finalTerm.append(numberTerm.elementAt(0)).append(numbersDictionary.get(numberTerm.elementAt(1).toString()));
+                    // number million
+                    if(numbersDictionary.containsKey(key))
+                        finalTerm.append(numberTerm.elementAt(0)).append(numbersDictionary.get(numberTerm.elementAt(1).toString()));
+                    //number kilogram
+                    else if (weightDictionary.containsKey(key) && priceTermSize == 2)
+                        finalTerm.append(numberTerm.elementAt(0)).append(weightDictionary.get(numberTerm.elementAt(1).toString()));
+                    // cover weight cases
+                    // 13.8 billion kilogram -> 13.8B kgs
+                    if (priceTermSize == 3)
+                        finalTerm.append(weightDictionary.get(numberTerm.elementAt(priceTermSize-1).toString()));
                 }
                 break;
             }
@@ -681,6 +730,8 @@ public class Parse {
                     finalTerm.append(numberTerm.elementAt(0)).append(" " + numberTerm.elementAt(1)).append(" Dollars");
                 else
                     finalTerm.append(numberTerm.elementAt(0)).append(" " + numberTerm.elementAt(1));
+                if (priceTermSize == 3)
+                    finalTerm.append(weightDictionary.get(numberTerm.elementAt(2).toString()));
                 break;
             }
 
@@ -696,6 +747,9 @@ public class Parse {
             //if smaller than million
             if (!isPrice && tmpNum.length() < 5){
                 finalTerm.append(numberTerm.elementAt(0));
+                if (priceTermSize == 2)
+                    finalTerm.append(weightDictionary.get(numberTerm.elementAt(1).toString()));
+
                 break;
             }
             if (tmpNum.length() < 7) {
@@ -716,7 +770,8 @@ public class Parse {
                         finalTerm = allCharactersZero(finalTerm);
                         finalTerm.append("K");
                     }
-
+                    if (priceTermSize == 2)
+                        finalTerm.append(weightDictionary.get(numberTerm.elementAt(1).toString()));
                 }
                 break;
             }
@@ -744,6 +799,8 @@ public class Parse {
                         finalTerm = allCharactersZero(finalTerm);
                         finalTerm.append("B");
                     }
+                    if (priceTermSize == 2)
+                        finalTerm.append(weightDictionary.get(numberTerm.elementAt(1).toString()));
                 }
                 break;
             }
@@ -844,15 +901,24 @@ public class Parse {
             documentsHashMap.put(documentDetails, 1);
             termsMap.put(key,documentsHashMap);
             numberOfDistinctWords++;
+            // if the key is city name, save the position of the key in the file
+            if (key.equals(cityname)){
+                documentDetails.setPosition(this.position);
+            }
             //key exist , update value.
         } else {
             int currentNumOfAppearance = 0;
             if (termsMap.get(key).containsKey(documentDetails))
                 currentNumOfAppearance = (termsMap.get(key)).get(documentDetails);
             (termsMap.get(key)).put(documentDetails,currentNumOfAppearance+1);
+            // if the key is city name, save the position of the key in the file
+            if (key.equals(cityname)){
+                documentDetails.setPosition(this.position);
+            }
             // find the max frequency in each doc
             if (currentNumOfAppearance > maxTermFrequency)
                 maxTermFrequency = currentNumOfAppearance;
+
         }
     }
 
@@ -931,7 +997,7 @@ public class Parse {
      * @return the language array list sorted
      */
     public TreeSet<String> getCorpusLanguages() {
-            return corpusLanguages;
+        return corpusLanguages;
     }
 
     /**
@@ -960,6 +1026,7 @@ public class Parse {
     public int getNumberOfDocuments() {
         return numberOfDocuments;
     }
+
 
     /**
      *

@@ -1,6 +1,12 @@
 package View;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 
 public class test {
 
@@ -28,20 +34,14 @@ public class test {
 //
 //        while (st2.hasMoreElements()) {
 //           // System.out.println(st2.nextElement());
-   //     }
+        //     }
 
-
-        String str1 = ".";
-        int s = str1.indexOf('.');
+        StringBuilder s = new StringBuilder("1.2222");
+        s.delete(s.indexOf(".") + 3,s.length());
         System.out.println(s);
-       // String[] ans = split(str1, ' ');
-      //  for (int i = 0; i < ans.length; i++) {
-      //      System.out.println(ans[i]+ " " + ans[i].length());
-      //  }
-
     }
 
-    public static void listFilesForFolder(final File folder) {
+        public static void listFilesForFolder(final File folder) {
         for (final File fileEntry : folder.listFiles()) {
             if (fileEntry.isDirectory()) {
                 listFilesForFolder(fileEntry);
@@ -73,7 +73,6 @@ public class test {
 
         String[] result = new String[wordCount];
         System.arraycopy(temp, 0, result, 0, wordCount);
-
         return result;
     }
 }
