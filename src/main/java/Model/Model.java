@@ -49,8 +49,7 @@ public class Model extends Observable {
     }
 
     public String dictionaryToString() {
-        //CHANGE THIS HERE
-        return null;
+        return readFile.getParser().getIndexer().toString();
         //create a func which return a string which represent the dictionary SORTED like this:
         // term, numberOfPerformances
         // dad, 50
