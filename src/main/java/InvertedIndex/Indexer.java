@@ -18,7 +18,7 @@ public class Indexer {
     private Vector<File> filesListLowerCase;
     private Vector<File> filesListUpperCase;
     private File folder;
-    public HashMap<String,TermDetails> dictionary;
+    private HashMap<String,TermDetails> dictionary;
     File postingNumbers;
     File postingLower;
     File postingUpper;
@@ -104,7 +104,7 @@ public class Indexer {
                     dictionary.put(key,termDetails);
                 }
                 else{
-                   int numberOfAppearance = dictionary.get(key).getNumberOfAppearance();
+                    int numberOfAppearance = dictionary.get(key).getNumberOfAppearance();
                     dictionary.get(key).setNumberOfApperance(numberOfAppearance + doc.getValue());
                 }
             }
@@ -155,7 +155,7 @@ public class Indexer {
             checkUpperCase();
             dividePostingFile();
             dividePostingFileNumbers();
-           // deleteTempFiles();
+            // deleteTempFiles();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -352,6 +352,19 @@ public class Indexer {
         }
     }
 
+    private void createDictionaryFile(){
+        try{
+            File dictionaryFile = new File(pathToSaveIndex + "/Dictionary.txt");
+            dictionaryFile.createNewFile();
+            FileWriter fileWriter = new FileWriter(dictionaryFile);
+            fileWriter.write(dictionaryToText());
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     /**
      *
      */
@@ -373,6 +386,78 @@ public class Indexer {
         return ans.toString();
     }
 
+    /**
+     *
+     * @return
+     */
+    public String dictionaryToText(){
+        StringBuilder ans = new StringBuilder(" ");
+        for (Map.Entry<String,TermDetails> entry: dictionary.entrySet()){
+            // term,number of appearance,line number
+            ans.append(entry.getKey() + "," + entry.getValue().getNumberOfAppearance() + "," + entry.getValue().getRowNumber() +  "\n");
+        }
+        return ans.toString();
+    }
+
+    public HashMap<String, TermDetails> getDictionary() {
+        return dictionary;
+    }
+
+    /**
+     *
+     * @param dictionary
+     */
+    public void setDictionary(HashMap<String, TermDetails> dictionary) {
+        try{
+            File dictionaryFile = new File(pathToSaveIndex + "/Dictionary.txt");
+            BufferedReader bf = new BufferedReader(new FileReader(dictionaryFile));
+            String line = bf.readLine();
+            while (line != null){
+                String [] splitLine = splitByDelimiter(line, ',');
+                TermDetails termDetails = new TermDetails();
+                termDetails.setNumberOfApperance(Integer.valueOf(splitLine[1]));
+                termDetails.setRowNumber(Integer.valueOf(splitLine[2]));
+                dictionary.put(splitLine[0],termDetails);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     *
+     * @param line
+     * @param delimiter
+     * @return
+     */
+    public String[] splitByDelimiter( String line, char delimiter) {
+        if(line.equals(" ")) {
+            String[] result = {""};
+            return result;
+        }
+        CharSequence[] temp = new CharSequence[(line.length() / 2) + 1];
+        int wordCount = 0;
+        int i = 0;
+        int j = line.indexOf(delimiter, 0); // first substring
+
+        while (j >= 0) {
+            String word = line.substring(i,j);
+            word = word.trim();
+            temp[wordCount++] = word;
+            i = j + 1;
+            j = line.indexOf(delimiter, i); // rest of substrings
+        }
+
+        temp[wordCount++] = line.substring(i); // last substring
+
+
+
+
+        String[] result = new String[wordCount];
+        System.arraycopy(temp, 0, result, 0, wordCount);
+
+        return result;
+    }
 
     private class RunnableExternalSort implements Runnable{
 

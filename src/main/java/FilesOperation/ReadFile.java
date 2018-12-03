@@ -7,8 +7,6 @@ import org.jsoup.select.Elements;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ReadFile{
 
@@ -56,4 +54,6 @@ public class ReadFile{
     public Parse getParser() {
         return parser;
     }
+
+
 }
