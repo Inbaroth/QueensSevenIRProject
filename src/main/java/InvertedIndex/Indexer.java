@@ -78,9 +78,7 @@ public class Indexer {
             writer2.close();
             writer3.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { }
     }
 
 
@@ -111,9 +109,7 @@ public class Indexer {
                 }
             }
             writer.write("\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { }
     }
 
 
@@ -143,8 +139,8 @@ public class Indexer {
                 }
             };
             Thread thread1 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
-            Thread thread2 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
-            Thread thread3 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
+            Thread thread2 = new Thread(new RunnableExternalSort(this.filesListLowerCase,this.postingLower,cmp));
+            Thread thread3 = new Thread(new RunnableExternalSort(this.filesListUpperCase,this.postingUpper,cmp));
             thread1.start();
             thread2.start();
             thread3.start();
@@ -185,9 +181,7 @@ public class Indexer {
             t2.join();
             createDictionaryFile();
             // deleteTempFiles();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { }
 
     }
 
@@ -223,9 +217,7 @@ public class Indexer {
                     secondLine = bf.readLine();
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { }
         return newPostingFiles;
 
     }
@@ -337,9 +329,7 @@ public class Indexer {
                 writer = new FileWriter(posting);
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { }
 
 
     }
@@ -376,9 +366,7 @@ public class Indexer {
                 writer = new FileWriter(posting);
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { }
 
     }
     public void deleteTempFiles(){
@@ -403,9 +391,7 @@ public class Indexer {
             FileWriter fileWriter = new FileWriter(dictionaryFile);
             fileWriter.write(dictionaryToText());
             fileWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { }
 
     }
 
@@ -464,9 +450,7 @@ public class Indexer {
                 dictionary.put(splitLine[0],termDetails);
 
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { }
     }
 
     /**
@@ -520,9 +504,7 @@ public class Indexer {
         public void run() {
             try {
                 ExternalSort.mergeSortedFiles(this.filesList, this.posting, cmp, Charset.defaultCharset(), false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            } catch (Exception e) { }
         }
     }
 }
