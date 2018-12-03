@@ -142,9 +142,18 @@ public class Indexer {
                     return o1.compareTo(o2);
                 }
             };
-            ExternalSort.mergeSortedFiles(this.filesListNumbers, this.postingNumbers, cmp, Charset.defaultCharset(), false);
+            Thread thread1 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
+            Thread thread2 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
+            Thread thread3 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
+            thread1.start();
+            thread2.start();
+            thread3.start();
+            thread1.join();
+            thread2.join();
+            thread3.join();
+/*            ExternalSort.mergeSortedFiles(this.filesListNumbers, this.postingNumbers, cmp, Charset.defaultCharset(), false);
             ExternalSort.mergeSortedFiles(this.filesListLowerCase, this.postingLower, cmp, Charset.defaultCharset(), false);
-            ExternalSort.mergeSortedFiles(this.filesListUpperCase, this.postingUpper, cmp, Charset.defaultCharset(), false);
+            ExternalSort.mergeSortedFiles(this.filesListUpperCase, this.postingUpper, cmp, Charset.defaultCharset(), false);*/
             Vector <File> postingFiles = new Vector();
             Vector <String> postingFilesNames = new Vector<>();
             postingFiles.add(this.postingLower);
@@ -157,9 +166,24 @@ public class Indexer {
             this.postingLower = newPostingFiles.remove(0);
             this.postingUpper = newPostingFiles.remove(0);
             this.postingNumbers = newPostingFiles.remove(0);
+            Thread t1 = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    dividePostingFileNumbers();
+                }
+            });
+            t1.start();
             checkUpperCase();
-            dividePostingFile();
-            dividePostingFileNumbers();
+            Thread t2 = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    dividePostingFile();
+                }
+            });
+            t2.start();
+            t1.join();
+            t2.join();
+            createDictionaryFile();
             // deleteTempFiles();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -284,17 +308,17 @@ public class Indexer {
 
             while (true){
                 while (lineUpper != null && lineUpper.charAt(0) == Character.toUpperCase(c)){
-                    writer.write(lineUpper.substring(lineUpper.indexOf(" ")));
+                    writer.write(lineUpper.substring(lineUpper.indexOf("<")).trim());
                     writer.write("\n");
-                    String key = lineUpper.substring(0,lineUpper.indexOf(" "));
+                    String key = lineUpper.substring(0,lineUpper.indexOf("<") - 1);
                     dictionary.get(key).setRowNumber(lineNumber);
                     lineNumber++;
                     lineUpper = bfUpper.readLine();
                 }
                 while (lineLower != null && lineLower.charAt(0) == c){
-                    writer.write(lineLower.substring(lineUpper.indexOf(" ")));
+                    writer.write(lineLower.substring(lineUpper.indexOf("<")).trim());
                     writer.write("\n");
-                    String key = lineLower.substring(0,lineLower.indexOf(" "));
+                    String key = lineLower.substring(0,lineLower.indexOf("<") - 1);
                     dictionary.get(key).setRowNumber(lineNumber);
                     lineNumber++;
                     lineLower = bfLower.readLine();
@@ -331,7 +355,7 @@ public class Indexer {
                     line = bf.readLine();
                 }
                 while (line != null && line.charAt(0) == c){
-                    writer.write(line.substring(line.indexOf("<")));
+                    writer.write(line.substring(line.indexOf("<")).trim());
                     writer.write("\n");
                     String key = line.substring(0,line.indexOf("<") - 1);
                     dictionary.get(key).setRowNumber(lineNumber);
@@ -394,7 +418,8 @@ public class Indexer {
      */
     public String toString(){
         StringBuilder ans = new StringBuilder(" ");
-        for (Map.Entry<String,TermDetails> entry: dictionary.entrySet()){
+        TreeMap<String,TermDetails> map = new TreeMap<>(dictionary);
+        for (Map.Entry<String,TermDetails> entry: map.entrySet()){
             ans.append(entry.getKey() + ", " + entry.getValue().getNumberOfAppearance() + "\n");
         }
         return ans.toString();

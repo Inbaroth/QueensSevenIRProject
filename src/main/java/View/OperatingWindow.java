@@ -5,12 +5,14 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 import javax.swing.*;
 import javafx.event.ActionEvent;
 
 import java.awt.*;
+import java.io.File;
 import java.util.Optional;
 
 public class OperatingWindow extends View{
@@ -34,35 +36,32 @@ public class OperatingWindow extends View{
         this.stage = stage;
     }
 
+
     public void loadPath(ActionEvent actionEvent){
-            try
-            {
-                JButton b = new JButton();
-                JFileChooser f = new JFileChooser();
-                f.setPreferredSize(new Dimension(1500,1000));
-                f.setDialogTitle("File chooser");
-                setFileChooserFont(f.getComponents());
-                f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                if (f.showOpenDialog(b) == JFileChooser.APPROVE_OPTION) {
-                    System.out.println(f.getSelectedFile().getAbsolutePath());
-                    Button sourceButton = (Button) actionEvent.getSource();
-                    String btnID = sourceButton.getId();
-                    if (btnID.equals("btn_browseCorpus")) {
-                        tf_browseCorpus.setText(f.getSelectedFile().getAbsolutePath());
-                    }
-                    if (btnID.equals("btn_browseIndexDestination")) {
-                        tf_browseIndexDestination.setText(f.getSelectedFile().getAbsolutePath());
-                    }
+        try
+        {
+            JButton b = new JButton();
+            DirectoryChooser chooser = new DirectoryChooser();
+            chooser.setTitle("Select Directory");
+            File file = chooser.showDialog(new Stage());
+            if (file != null) {
+                System.out.println(file.getAbsolutePath());
+                Button sourceButton = (Button) actionEvent.getSource();
+                String btnID = sourceButton.getId();
+                if (btnID.equals("btn_browseCorpus")) {
+                    tf_browseCorpus.setText(file.getAbsolutePath());
+                }
+                if (btnID.equals("btn_browseIndexDestination")) {
+                    tf_browseIndexDestination.setText(file.getAbsolutePath());
                 }
             }
-            catch(
-                    IllegalArgumentException e)
-            {
-                throw e;
-            }
+        }
+        catch(
+                IllegalArgumentException e)
+        {
+            throw e;
+        }
     }
-
-
 
     private void setFileChooserFont(Component[] comp)
     {
