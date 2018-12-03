@@ -33,6 +33,7 @@ public class Parse {
     public static ThreadPoolExecutor threadPoolExecutor;
     int numberOfDocuments = 0;
     String cityname;
+    Thread thread;
 
 
     /**
@@ -58,7 +59,7 @@ public class Parse {
 
         int threadPoolSize = Runtime.getRuntime().availableProcessors() * 2;
         this.threadPoolExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-        threadPoolExecutor.setCorePoolSize(threadPoolSize);
+        threadPoolExecutor.setCorePoolSize(1);
 
         // load stop words into dictionary
         File file = new File("src/main/resources/stop words.txt");
@@ -166,7 +167,7 @@ public class Parse {
     public void parsing(String docId, String docText, String fileName, int counter){
         // every 50 files, move all the data in the term map into indexer and reset the map
         numberOfDocuments++;
-        if (counter == 100) {
+        if (counter == 60) {
             ReadFile.counter = 0;
             moveToIndexer();
             this.termsMap = new ConcurrentHashMap<>();
@@ -1008,10 +1009,17 @@ public class Parse {
         if (isStemming) {
             stemmer.stemMap(this.termsMap);
         }
-        threadPoolExecutor.execute(new RunnableBuildIndex());
-/*        Thread thread = new Thread(new RunnableBuildIndex());
-        thread.start();*/
-        //indexer.buildIndex(termsMap);
+/*//        threadPoolExecutor.execute(new RunnableBuildIndex());
+        if (this.thread != null) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+         this.thread = new Thread(new RunnableBuildIndex());
+        this.thread.start();*/
+        indexer.buildIndex(termsMap);
 
     }
 

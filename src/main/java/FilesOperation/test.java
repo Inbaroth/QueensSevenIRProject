@@ -1,46 +1,44 @@
 package FilesOperation;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.io.IOException;
 
 public class test{
 
-    public static void main(String[] args) {
-        String line = "<TEXT> for 112 Million company, Vacation4U 2 3/4% is preety bad, on 14 MAY, They spent 55 Trillion, While 320 bn Dollars waisted on drugs, BAD Step-By-Step, 2-4 times. From 10 1/2-11,000,122. Between 12 1/2 and 4,000,123. </TEXT>";
-        String line1 = "<TEXT> Inbar hey 138 1/2 dollars. </TEXT>";
-//        String line2 = "<TEXT> Hey hong Hong. </TEXT>";
-        String text = getText();
-        String text1 = getText1();
-        String text2 = getText2();
-        String text3 = getText3();
-        String text4 = getText4();
-        String text5 = getText5();
-        Parse p = new Parse("",false);
-        p.parsing("1",line1,"1",0);
-        long startTime = System.nanoTime();
-//        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus",false);
-//          ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FT941",false);
-//          ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus2","src/main/resources",false);
-        long endTime = System.nanoTime();
-        long duration = (endTime - startTime)/1000000;
-        System.out.println("*******************");
+    public static void main(String[] args) throws IOException {
+            String line = "<TEXT> for 112 Million company, Vacation4U 2 3/4% is preety bad, on 14 MAY, They spent 55 Trillion, While 320 bn Dollars waisted on drugs, BAD Step-By-Step, 2-4 times. From 10 1/2-11,000,122. Between 12 1/2 and 4,000,123. </TEXT>";
+            String line1 = "<TEXT> Inbar hey 138 1/2 dollars. </TEXT>";
+    //        String line2 = "<TEXT> Hey hong Hong. </TEXT>";
+            String text = getText();
+            String text1 = getText1();
+            String text2 = getText2();
+            String text3 = getText3();
+            String text4 = getText4();
+            String text5 = getText5();
+            Parse p = new Parse("",false);
+//            p.parsing("1",line1,"1",0);
+            long startTime = System.nanoTime();
+    //        ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus",false);
+    //          ReadFile reader = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus\\FT941",false);
+              ReadFile reader1 = new ReadFile("C:\\Users\\איתן אביטן\\Downloads\\לימודים\\אחזור מידע\\פרויקט מנוע חיפוש\\corpus\\corpus2","src/main/resources",false);
+            long endTime = System.nanoTime();
+            long duration = (endTime - startTime)/1000000;
+            System.out.println("*******************");
 
 
-        ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails,Integer>> map = p.getTermsMap();
-        for (Map.Entry<String,ConcurrentHashMap<DocumentDetails,Integer>> entry:map.entrySet()) {
-            System.out.print(entry.getKey()+ ": ");
-                for (Map.Entry<DocumentDetails, Integer> doc : entry.getValue().entrySet()) {
-                    System.out.print("<" + doc.getKey() + " , " + doc.getValue() + "> -> ");
-                }
-                System.out.println();
-        }
+/*            ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails,Integer>> map = p.getTermsMap();
+            for (Map.Entry<String,ConcurrentHashMap<DocumentDetails,Integer>> entry:map.entrySet()) {
+                System.out.print(entry.getKey()+ ": ");
+                    for (Map.Entry<DocumentDetails, Integer> doc : entry.getValue().entrySet()) {
+                        System.out.print("<" + doc.getKey() + " , " + doc.getValue() + "> -> ");
+                    }
+                    System.out.println();
+            }*/
 
-        duration = duration/60000;
-        System.out.println(duration + " min");
-//        System.out.println("Number of tokens: " + reader.getParser().getTermsMap().size());
-//        System.out.println(reader1.getParser().getIndexer().dictionary.size());
-//        System.out.println(reader1.getParser().getIndexer().getDictionary().size());
+            duration = duration/60000;
+            System.out.println(duration + " min");
+    //        System.out.println("Number of tokens: " + reader.getParser().getTermsMap().size());
+    //        System.out.println(reader1.getParser().getIndexer().dictionary.size());
+            System.out.println(reader1.getParser().getIndexer().getDictionary().size());
 
     }
 

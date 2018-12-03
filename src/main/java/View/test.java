@@ -36,9 +36,21 @@ public class test {
 //           // System.out.println(st2.nextElement());
         //     }
 
-        StringBuilder s = new StringBuilder("1.2222");
-        s.delete(s.indexOf(".") + 3,s.length());
-        System.out.println(s);
+        String api = "http://getcitydetails.geobytes.com/GetCityDetails?fqcn=";
+        URL url;
+        try {
+            url = new URL(api + "All");
+            URLConnection connection = url.openConnection();
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(connection.getInputStream()));
+            String line = br.readLine();
+            String currency = line.substring(line.indexOf("\"geobytescurrencycode\":") + 24, line.indexOf("geobytestitle") - 3);
+            String countryName = line.substring(line.indexOf("\"geobytescountry\":") + 19, line.indexOf("geobytesregionlocation") - 3);
+            String populationSize = line.substring(line.indexOf("\"geobytespopulation\":") + 22, line.indexOf("geobytesnationalityplural") - 3);
+            System.out.println(countryName);
+            System.out.println(populationSize);
+        } catch (Exception e) {
+            }
     }
 
         public static void listFilesForFolder(final File folder) {

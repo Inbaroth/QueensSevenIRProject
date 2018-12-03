@@ -1,7 +1,6 @@
 package InvertedIndex;
 
 import FilesOperation.DocumentDetails;
-import FilesOperation.Parse;
 import com.google.code.externalsorting.ExternalSort;
 
 import java.io.*;
@@ -22,7 +21,7 @@ public class Indexer {
     private Vector<File> filesListLowerCase;
     private Vector<File> filesListUpperCase;
     private File folder;
-    private HashMap<String,TermDetails> dictionary;
+    private ConcurrentHashMap<String,TermDetails> dictionary;
     private HashMap<String, ArrayList<CityDetails>> citiesIndex;
     File postingNumbers;
     File postingLower;
@@ -38,7 +37,7 @@ public class Indexer {
         this.filesListLowerCase = new Vector<>();
         this.filesListUpperCase = new Vector<>();
         this.filesListNumbers = new Vector<>();
-        this.dictionary = new HashMap<>();
+        this.dictionary = new ConcurrentHashMap<>();
         this.citiesIndex = new HashMap<>();
     }
 
@@ -92,7 +91,7 @@ public class Indexer {
      * @param key
      * @param entry
      */
-    private void writeToPostingFile(FileWriter writer,String key, Map.Entry<String, ConcurrentHashMap<DocumentDetails, Integer>> entry) {
+    private synchronized void writeToPostingFile(FileWriter writer,String key, Map.Entry<String, ConcurrentHashMap<DocumentDetails, Integer>> entry) {
         try {
             writer.write(key + " ");
             for (Map.Entry<DocumentDetails, Integer> doc : entry.getValue().entrySet()) {
@@ -144,8 +143,8 @@ public class Indexer {
      */
     public void mergePostingFile() {
         try {
-        Parse.threadPoolExecutor.shutdown();
-        while (Parse.threadPoolExecutor.getActiveCount() != 0);
+        //while (Parse.threadPoolExecutor.getActiveCount() != 0);
+        //Parse.threadPoolExecutor.shutdown();
         //Parse.threadPoolExecutor.awaitTermination(Long.MAX_VALUE,TimeUnit.NANOSECONDS);
         // create a new merge posting file which will be contains all the files in the filesList field
         String pathForNumbers = this.pathToSaveIndex + "/mergePostingNumbersTemp.txt";
@@ -164,7 +163,7 @@ public class Indexer {
                     return o1.compareTo(o2);
                 }
             };
-            Thread thread1 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
+/*            Thread thread1 = new Thread(new RunnableExternalSort(this.filesListNumbers,this.postingNumbers,cmp));
             Thread thread2 = new Thread(new RunnableExternalSort(this.filesListLowerCase,this.postingLower,cmp));
             Thread thread3 = new Thread(new RunnableExternalSort(this.filesListUpperCase,this.postingUpper,cmp));
             thread1.start();
@@ -172,10 +171,10 @@ public class Indexer {
             thread3.start();
             thread1.join();
             thread2.join();
-            thread3.join();
-/*            ExternalSort.mergeSortedFiles(this.filesListNumbers, this.postingNumbers, cmp, Charset.defaultCharset(), false);
+            thread3.join();*/
+            ExternalSort.mergeSortedFiles(this.filesListNumbers, this.postingNumbers, cmp, Charset.defaultCharset(), false);
             ExternalSort.mergeSortedFiles(this.filesListLowerCase, this.postingLower, cmp, Charset.defaultCharset(), false);
-            ExternalSort.mergeSortedFiles(this.filesListUpperCase, this.postingUpper, cmp, Charset.defaultCharset(), false);*/
+            ExternalSort.mergeSortedFiles(this.filesListUpperCase, this.postingUpper, cmp, Charset.defaultCharset(), false);
             Vector <File> postingFiles = new Vector();
             Vector <String> postingFilesNames = new Vector<>();
             postingFiles.add(this.postingLower);
@@ -234,9 +233,11 @@ public class Indexer {
                     }
                 }
                 postingWriter.write("</DOC>");
-                postingWriter.write("\n");
+                dictionaryWriter.write("\n");
                 dictionaryWriter.write("\n");
             }
+            postingWriter.close();
+            dictionaryWriter.close();
         } catch (Exception e) {}
 
 
@@ -274,6 +275,7 @@ public class Indexer {
                     firstLine = secondLine;
                     secondLine = bf.readLine();
                 }
+                writer.close();
             }
         } catch (Exception e) { }
         return newPostingFiles;
@@ -284,7 +286,7 @@ public class Indexer {
     /**
      *
      */
-    private void checkUpperCase() {
+    private synchronized void checkUpperCase() {
 
         try {
             File newLower = new File(this.pathToSaveIndex + "/mergePostingLower.txt");
@@ -347,7 +349,7 @@ public class Indexer {
     }
 
 
-    private void dividePostingFile(){
+    private synchronized void dividePostingFile(){
 
         try{
             char c = 'A';
@@ -392,7 +394,7 @@ public class Indexer {
 
     }
 
-    private void dividePostingFileNumbers(){
+    private synchronized void dividePostingFileNumbers(){
 
         try{
             char c = '0';
@@ -485,14 +487,15 @@ public class Indexer {
      */
     public String dictionaryToText(){
         StringBuilder ans = new StringBuilder(" ");
-        for (Map.Entry<String,TermDetails> entry: dictionary.entrySet()){
+        TreeMap<String,TermDetails> map = new TreeMap<>(dictionary);
+        for (Map.Entry<String,TermDetails> entry: map.entrySet()){
             // term,number of appearance,line number
             ans.append(entry.getKey() + "," + entry.getValue().getNumberOfAppearance() + "," + entry.getValue().getRowNumber() +  "\n");
         }
         return ans.toString();
     }
 
-    public HashMap<String, TermDetails> getDictionary() {
+    public ConcurrentHashMap<String, TermDetails> getDictionary() {
         return dictionary;
     }
 
