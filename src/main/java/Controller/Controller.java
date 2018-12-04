@@ -25,7 +25,12 @@ public class Controller extends Observable implements Observer {
         }
     }
 
-
+    /**
+     * load the path of the corpus&stop-words and the path of where to save the index
+     * @param pathOfCorpus - path to source  file of the corpus and stop-words list
+     * @param pathOfIndexDestination path to where the index should be saved
+     * @param stemming - boolean if doing stemming on index terms or not
+     */
     public void loadPath(String pathOfCorpus, String pathOfIndexDestination, boolean stemming){
         try{
             model.loadPath(pathOfCorpus, pathOfIndexDestination, stemming);
@@ -39,54 +44,53 @@ public class Controller extends Observable implements Observer {
         }
     }
 
-
+    /**
+     * @return the corpus's documents languages
+     */
     public ObservableList<String> getDocumentsLanguages(){
-
-
         TreeSet<String> docsLang = model.getDocumentsLanguages();
+        //casting
         ObservableList<String> docLangObservable = FXCollections.observableArrayList(docsLang);
-
-        //HERE
-
-
-        //ObservableList<String> docLangObserv = FXCollections.observableArrayList(Lang);
-        //ObservableSet<String> docLangObservable= FXCollections.observableSet(docsLang);
-
         return docLangObservable;
     }
 
+    /**
+     * clear all memory of the program, ram and disk
+     */
     public void resetAll(){
         model.resetAll();
     }
 
-
+    /**
+     * @return the dictionary in the format "term, numberOfAppearance" as a continues string
+     */
     public String dictionaryToString() {
        return model.dictionaryToString();
     }
 
+    /**
+     * upload the dictionary of index from it's source file in disk to the ram
+     */
     public void uploadDictionaryToMem() {
         model.uploadDictionaryToMem();
     }
 
     /**
-     * return number of docs have been indexed
-     * @return
+     * @return number of docs have been indexed
      */
     public int getNumberOfDocs(){
         return model.getNumberOfDocs();
     }
 
     /**
-     * return number of terms in index
-     * @return
+     * @return number of terms in index
      */
     public int getNumberOfTerms(){
        return model.getNumberOfTerms();
     }
 
     /**
-     * return total time in seconds to create index
-     * @return
+     * @return total time in seconds to create index
      */
     public double getTotalTimeToIndex(){
         return model.getTotalTimeToIndex();

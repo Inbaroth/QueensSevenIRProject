@@ -37,6 +37,11 @@ public class OperatingWindow extends View{
     }
 
 
+    /**
+     * load path from DirectoryChooser to the textField represents the path
+     * for pathOfCorpus and for pathToSave
+     * @param actionEvent - clicking on one of the two DirectoryChooser
+     */
     public void loadPath(ActionEvent actionEvent){
         try
         {
@@ -63,16 +68,10 @@ public class OperatingWindow extends View{
         }
     }
 
-    private void setFileChooserFont(Component[] comp)
-    {
-        for(int x = 0; x < comp.length; x++)
-        {
-            if(comp[x] instanceof Container) setFileChooserFont(((Container)comp[x]).getComponents());
-            try{comp[x].setFont(new Font("calibri light", Font.PLAIN,40));}
-            catch(Exception e){}//do nothing
-        }
-    }
-
+    /**
+     * creates the index using the link of the controller to the model
+     * @param actionEvent clicking on the "Create Index" button
+     */
     public void createIndex(ActionEvent actionEvent){
         tf_browseCorpus.setDisable(true);
         tf_browseIndexDestination.setDisable(true);
@@ -88,11 +87,16 @@ public class OperatingWindow extends View{
             btn_UploadDictToMem.setDisable(false);
             btn_resetAll.setDisable(false);
             ObservableList<String> languages = controller.getDocumentsLanguages();
+            //insert documents languages into the combo box
             cb_languageSelect.setItems(languages);
             cb_languageSelect.setVisibleRowCount(languages.size()/2);
         }
     }
 
+    /**
+     * makes sure the user really want to reset all memory of the program including main memory and the saved data in disk
+     * @param actionEvent clicking on "Reset All" button
+     */
     public void resetValidation(ActionEvent actionEvent){
         //alert("Are you sure you want to reset all memory?", Alert.AlertType.CONFIRMATION);
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -108,7 +112,11 @@ public class OperatingWindow extends View{
             alert.close();
     }
 
-
+    /**
+     * displays the dictionary has been created while creating the index
+     * display in a new stage (window)
+     * @param actionEvent - clicking on "Display Dictionary" button
+     */
     public void displayDictionary(ActionEvent actionEvent){
         newStage("DictionaryDisplay.fxml", "", dictionaryDisplay, 350, 560, controller);
     }

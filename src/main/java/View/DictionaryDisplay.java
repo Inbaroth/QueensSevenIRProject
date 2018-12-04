@@ -4,6 +4,9 @@ import Controller.Controller;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
+/**
+ * represent the stage on the dictionary display
+ */
 public class DictionaryDisplay extends View {
 
 
@@ -17,7 +20,9 @@ public class DictionaryDisplay extends View {
         setText();
     }
 
-
+    /**
+     * sets the dictionary content in the right place in the stage
+     */
     private void setText(){
         if(controller.dictionaryToString()!=null)
             ta_dictionaryDisplay.setText(controller.dictionaryToString());

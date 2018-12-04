@@ -18,7 +18,6 @@ public class Main extends Application {
         model.addObserver(controller);
         FXMLLoader fxmlLoader = new FXMLLoader();
         Parent root = fxmlLoader.load(getClass().getResource("/HomePage.fxml").openStream());
-        //Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("HomePage.fxml"));
         primaryStage.setTitle("Home of SEARCH");
         Scene scene = new Scene(root, 418, 401);
         primaryStage.setScene(scene);
