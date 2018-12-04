@@ -35,7 +35,7 @@ public class View implements Observer {
     }
 
     public void Start(ActionEvent actionEvent) {
-        newStage("OperatingWindow.fxml", "", operatingWindow, 650, 490);
+        newStage("OperatingWindow.fxml", "", operatingWindow, 670, 490, controller);
     }
 
 
@@ -51,7 +51,8 @@ public class View implements Observer {
                     // ... user chose OK
                     // Close program
                     //enable start button when return to primary stage (home window)
-                    btn_start.setDisable(false);
+                    if(btn_start!=null)
+                        btn_start.setDisable(false);
                 } else {
                     // ... user chose CANCEL or closed the dialog
                     windowEvent.consume();
@@ -61,7 +62,7 @@ public class View implements Observer {
         });
     }
     //create a new stage
-    protected void newStage(String fxmlName,String title, View windowName, int width, int height){
+    protected void newStage(String fxmlName,String title, View windowName, int width, int height, Controller controller){
         /*FXMLLoader fxmlLoader = new
                 FXMLLoader(getClass().getResource(fxmlName));*/
         FXMLLoader fxmlLoader = new FXMLLoader();

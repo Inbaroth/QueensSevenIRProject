@@ -7,7 +7,6 @@ import org.jsoup.nodes.Document;
 import java.io.*;
 import java.text.BreakIterator;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -18,7 +17,7 @@ public class Parse {
     Stemmer stemmer;
 
     // String - term
-    ConcurrentHashMap <String, ConcurrentHashMap<DocumentDetails,Integer>> termsMap;
+    HashMap <String, HashMap<DocumentDetails,Integer>> termsMap;
     HashSet<String> stopWords;
     TreeSet<String> corpusLanguages;
     HashMap<String,String> monthDictionary;
@@ -55,7 +54,7 @@ public class Parse {
         this.percentSet = new HashSet<>();
         this.dollarSet = new HashSet<>();
         this.weightDictionary = new HashMap<>();
-        fillMonthDictionary();
+        fillDictionaries();
 
         int threadPoolSize = Runtime.getRuntime().availableProcessors() * 2;
         this.threadPoolExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
@@ -80,7 +79,7 @@ public class Parse {
     /**
      *
      */
-    private void fillMonthDictionary() {
+    private void fillDictionaries() {
         monthDictionary.put("JANUARY", "01");
         monthDictionary.put("January", "01");
         monthDictionary.put("Jan", "01");
@@ -170,7 +169,7 @@ public class Parse {
         if (counter == 60) {
             ReadFile.counter = 0;
             moveToIndexer();
-            this.termsMap = new ConcurrentHashMap<>();
+            this.termsMap = new HashMap<>();
         }
         //values , key + value of DocumentsHashMap
         DocumentDetails documentDetails = new DocumentDetails(docId,fileName);
@@ -188,10 +187,16 @@ public class Parse {
                 cityName = cityName.substring(0,indexOfSpace);
             documentDetails.setCityName(cityName);
             updateTerm(cityName.toUpperCase(),documentDetails);
-            this.cityname = cityName;
+            this.cityname = cityName.toUpperCase();
         }
         if (language != null){
             language = language.trim();
+            int indexOfSpace = language.indexOf(" ");
+            if (indexOfSpace != -1)
+                language = language.substring(0,indexOfSpace);
+            int indexOfComma = language.indexOf(",");
+            if (indexOfComma != -1)
+                language = language.substring(0,indexOfComma);
             corpusLanguages.add(language);
             documentDetails.setLanguage(language);
         }
@@ -287,6 +292,8 @@ public class Parse {
                 wordsInDoc[i] = wordsInDoc[i].substring(1,wordsInDoc[i].length() - 1);
 
 
+            if (wordsInDoc[i].equalsIgnoreCase(this.cityname))
+                documentDetailes.setPosition(position);
             // check if the string in wordInDoc[i] contains only letters
             if (!monthDictionary.containsKey(wordsInDoc[i]) && !wordsInDoc.equals("between") && isAlpha(wordsInDoc[i])){
                 // the word doesn't exist in the dictionary starting with LOWER and UPPER
@@ -898,14 +905,11 @@ public class Parse {
     private void updateTerm(String key, DocumentDetails documentDetails){
         //check if term not exist in dictionary , add key to TreeMapDic and create it's dic of docs
         if(!termsMap.containsKey(key)){
-            ConcurrentHashMap<DocumentDetails,Integer> documentsHashMap = new ConcurrentHashMap<>();
+            HashMap<DocumentDetails,Integer> documentsHashMap = new HashMap<>();
             documentsHashMap.put(documentDetails, 1);
             termsMap.put(key,documentsHashMap);
             numberOfDistinctWords++;
             // if the key is city name, save the position of the key in the file
-            if (key.equals(cityname)){
-                documentDetails.setPosition(this.position);
-            }
             //key exist , update value.
         } else {
             int currentNumOfAppearance = 0;
@@ -913,9 +917,6 @@ public class Parse {
                 currentNumOfAppearance = (termsMap.get(key)).get(documentDetails);
             (termsMap.get(key)).put(documentDetails,currentNumOfAppearance+1);
             // if the key is city name, save the position of the key in the file
-            if (key.equals(cityname)){
-                documentDetails.setPosition(this.position);
-            }
             // find the max frequency in each doc
             if (currentNumOfAppearance > maxTermFrequency)
                 maxTermFrequency = currentNumOfAppearance;
@@ -927,7 +928,7 @@ public class Parse {
      *
      * @return the termsMap dictionary
      */
-    public ConcurrentHashMap<String, ConcurrentHashMap<DocumentDetails,Integer>> getTermsMap() {
+    public HashMap<String, HashMap<DocumentDetails,Integer>> getTermsMap() {
         return termsMap;
     }
 
@@ -1044,14 +1045,14 @@ public class Parse {
         indexer.mergePostingFile();
     }
 
-    private class RunnableBuildIndex implements Runnable{
+/*    private class RunnableBuildIndex implements Runnable{
 
         @Override
         public void run() {
             ConcurrentHashMap <String, ConcurrentHashMap<DocumentDetails,Integer>> terms = new ConcurrentHashMap<>(termsMap);
             indexer.buildIndex(terms);
         }
-    }
+    }*/
 
 }
 

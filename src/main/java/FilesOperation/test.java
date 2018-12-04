@@ -43,94 +43,50 @@ public class test{
     }
 
     private static String getText() {
-        return "<TEXT>\n" +
-                " -------------------------------------\n" +
-                "UK\n" +
-                " -------------------------------------\n" +
-                "Aerostructures              26\n" +
-                "Alexon                      24\n" +
-                "Baird (William)             27\n" +
-                "Bardon Group                26\n" +
-                "Blenheim                    24\n" +
-                "Brake Bros                  26\n" +
-                "Brit Bio-technology         25\n" +
-                "British Aerospace        27,23\n" +
-                "British Gas                 29\n" +
-                "CINVen                      24\n" +
-                "Cable and Wireless          24\n" +
-                "Coal Investments            27\n" +
-                "Croda                       25\n" +
-                "Edinburgh Fund Man          27\n" +
-                "Estates&amp; General            27\n" +
-                "European Motor Hdgs         16\n" +
-                "GKN                         23\n" +
-                "Hammerson               23, 22\n" +
-                "Harland and Wolff           25\n" +
-                "Henderson Highland          27\n" +
-                "Heron                       25\n" +
-                "Hickson                     26\n" +
-                "Hodder Headline             24\n" +
-                "Jeyes                       24\n" +
-                "Jourdan (Thomas)            27\n" +
-                "Kapiti                      26\n" +
-                "Latin American Cos          27\n" +
-                "Littlewoods                 27\n" +
-                "Lloyd Thompson              25\n" +
-                "London Clubs Int            16\n" +
-                "Macfarlane                  26\n" +
-                "Misys                       26\n" +
-                "Monarch Resources           27\n" +
-                "Morgan Grenfell             27\n" +
-                "Nestor-BNA                  27\n" +
-                "Next                    23, 22\n" +
-                "Norwich Union        25, 22, 1\n" +
-                "OIS Intl Inspection         27\n" +
-                "Pentos                      24\n" +
-                "PosTel                      23\n" +
-                "Proudfoot                   26\n" +
-                "Psion                       24\n" +
-                "Raglan Prop Trust           16\n" +
-                "Ropner                      27\n" +
-                "Rotork                      26\n" +
-                "Scottish Asian Inv          27\n" +
-                "Servomex                    27\n" +
-                "Taylor Woodrow              24\n" +
-                "Thorpe (FW)                 27\n" +
-                "Tibbett &amp; Britten           24\n" +
-                "Transfer Technology         24\n" +
-                "Ulster Television           27\n" +
-                "Wainhomes                   26\n" +
-                "Waterford Wedgwood          25\n" +
-                "Watts Blake Bourne          24\n" +
-                "Westland                    23\n" +
-                " -------------------------------------\n" +
-                "Overseas\n" +
-                " -------------------------------------\n" +
-                "Anglo American              30\n" +
-                "BMW                         28\n" +
-                "Bertelsmann                 28\n" +
-                "Casino                      31\n" +
-                "Ciba                    28, 22\n" +
-                "Coors                       29\n" +
-                "Credit Lyonnais             29\n" +
-                "Deutsche Bank               28\n" +
-                "GM                          29\n" +
-                "Grumman                     29\n" +
-                "Horsham                     29\n" +
-                "ING                         30\n" +
-                "JCI                         30\n" +
-                "KLM                         28\n" +
-                "Mars                        22\n" +
-                "Microsoft                   30\n" +
-                "Moscow Narodny              29\n" +
-                "New World Devlop'mnt        30\n" +
-                "Northrop                    29\n" +
-                "Pirelli                     29\n" +
-                "Rinascente                  31\n" +
-                "Trizec                      29\n" +
-                "Viacom                      29\n" +
-                " -------------------------------------\n" +
-                "</TEXT>\n";
+        return "\n" +
+                "<DOC>\n" +
+                "<DOCNO> FBIS3-3366 </DOCNO>\n" +
+                "<HT>    \"drchi054_k_94010\" </HT>\n" +
+                "\n" +
+                "\n" +
+                "<HEADER>\n" +
+                "<AU>   FBIS-CHI-94-054 </AU>\n" +
+                "Document Type:Daily Report \n" +
+                "<DATE1>  19 Mar 1994 </DATE1>\n" +
+                "\n" +
+                "</HEADER>\n" +
+                "\n" +
+                "<F P=100> Political &amp; Social </F>\n" +
+                "<H3> <TI>   CPPCC Second Session Adopts Amended Charter </TI></H3>\n" +
+                "<F P=102>  OW1903234794 Beijing XINHUA Domestic Service in Chinese 0921 \n" +
+                "GMT 19 Mar 94 </F>\n" +
+                "\n" +
+                "<F P=103> OW1903234794 </F>\n" +
+                "<F P=104>  Beijing XINHUA Domestic Service </F>\n" +
+                "\n" +
+                "\n" +
+                "<TEXT>\n" +
+                "Language: <F P=105> Chinese </F>\n" +
+                "Article Type:BFN \n" +
+                "\n" +
+                "  [Text] Beijing, 19 Mar (XINHUA) -- Resolution of the Second \n" +
+                "Session of the Eighth National Committee of the Chinese People's \n" +
+                "Political Consultative Conference [CPPCC] on the (amended) \n" +
+                "\"Charter of the Chinese People's Political Consultative \n" +
+                "Conference\" \n" +
+                "  (Adopted by the Second Session of the Eighth CPPCC National \n" +
+                "Committee on 19 March 1994) \n" +
+                "  The Second Session of the Eighth CPPCC National Committee \n" +
+                "has \n" +
+                "decided: The (amended) \"Charter of the Chinese People's \n" +
+                "Political Consultative Conference\" proposed by the Standing \n" +
+                "Committee of the CPPCC National Committee is adopted, and the \n" +
+                "amended \"Charter of the Chinese People's Political Consultative \n" +
+                "Conference\" shall take effect as of today. \n" +
+                "\n" +
+                "</TEXT>\n" +
+                "\n" +
+                "</DOC>\n";
     }
     private static String getText1(){
         return "<TEXT>\n" +

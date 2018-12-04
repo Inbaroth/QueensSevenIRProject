@@ -12,6 +12,7 @@ public class ReadFile{
 
     File folder;
     Parse parser;
+    String pathToParse;
 
     public static int counter = -1;
 
@@ -22,13 +23,15 @@ public class ReadFile{
      */
     public ReadFile(String pathToParse,String pathToSaveIndex,  boolean isStemming) {
         folder = new File(pathToParse);
-        parser = new Parse(pathToSaveIndex, isStemming);
+        parser = new Parse(pathToParse,pathToSaveIndex, isStemming);
         listFilesForFolder(folder);
         parser.notifyDone();
     }
 
     private void listFilesForFolder(File folder) {
         for (File fileEntry : folder.listFiles()) {
+            if (fileEntry.getName().equals(pathToParse + "/stop-words.txt"))
+                continue;
             if (fileEntry.isDirectory()) {
                 listFilesForFolder(fileEntry);
             } else {
