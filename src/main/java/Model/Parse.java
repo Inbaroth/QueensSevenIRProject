@@ -1,52 +1,61 @@
-package FilesOperation;
+package Model;
 
-import InvertedIndex.Indexer;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import java.io.*;
+
 import java.text.BreakIterator;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+
 
 public class Parse {
 
     Indexer indexer;
     boolean isStemming;
     Stemmer stemmer;
-
-    // String - term
-    HashMap <String, HashMap<DocumentDetails,Integer>> termsMap;
-    HashSet<String> stopWords;
-    TreeSet<String> corpusLanguages;
+    HashMap <String, Integer> termsMapPerDocument; // <Term, TF>
+    // CHANGED HERE
+    TreeMap<Integer,String> topFiveEntities;
+    ///////////////
+    HashMap<String, ArrayList<Integer>> citiesMap; // <CityName, listOfPositions>
     HashMap<String,String> monthDictionary;
     HashMap<String,String> numbersDictionary;
     HashMap<String,String> pricesDictionary;
     HashMap<String,String> weightDictionary;
     HashSet<String> percentSet;
     HashSet<String> dollarSet;
+    // the maximum frequency in the current doc being parsed.
     int maxTermFrequency = 0;
+    // counter for the distinct words in the document being parsed.
     int numberOfDistinctWords = 0;
+    // counter for the position of the word in the document being parsed
     int position = -1;
-    public static ThreadPoolExecutor threadPoolExecutor;
+    // counter for the number of documents has been parsed
     int numberOfDocuments = 0;
-    String cityname;
-    Thread thread;
+    // docId of the current doc being parsed.
+    String docId;
+
+    public static int numCounter = 0;
 
 
     /**
-     * Constructor
+     *
+     * @param isStemming - boolean indicator to know if need to stem or not
+     * @param indexer -
      */
-    public Parse(String pathToSaveIndex, boolean isStemming) {
-        this.termsMap = new ConcurrentHashMap<>();
-        this.indexer = new Indexer(pathToSaveIndex);
-        //this.documentList = new SortedList<String>(Comparator);
+    public Parse(boolean isStemming, Indexer indexer) {
+        this.termsMapPerDocument = new HashMap<>();
+        this.topFiveEntities = new TreeMap<>(new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                return o2.compareTo(o1);
+            }
+        });
+        this.citiesMap = new HashMap<>();
+        this.indexer = indexer;
         this.isStemming = isStemming;
         if (isStemming)
             stemmer = new Stemmer();
-        this.stopWords = new HashSet<>();
-        this.corpusLanguages = new TreeSet<>();
         // create and fill dictionaries
         this.monthDictionary = new HashMap<>();
         this.numbersDictionary = new HashMap<>();
@@ -55,29 +64,10 @@ public class Parse {
         this.dollarSet = new HashSet<>();
         this.weightDictionary = new HashMap<>();
         fillDictionaries();
-
-        int threadPoolSize = Runtime.getRuntime().availableProcessors() * 2;
-        this.threadPoolExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-        threadPoolExecutor.setCorePoolSize(1);
-
-        // load stop words into dictionary
-        File file = new File("src/main/resources/stop words.txt");
-        try {
-            BufferedReader bf = new BufferedReader(new FileReader(file));
-            String line = bf.readLine();
-            while (line != null){
-                stopWords.add(line);
-                line = bf.readLine();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
-     *
+     * This function fills of the dictionaries in this class with the right parameters
      */
     private void fillDictionaries() {
         monthDictionary.put("JANUARY", "01");
@@ -132,9 +122,7 @@ public class Parse {
         percentSet.add("percent");
         percentSet.add("Percent");
         percentSet.add("Percentage");
-        percentSet.add("percents");
         percentSet.add("percentages");
-        percentSet.add("Percents");
         percentSet.add("Percentages");
         //Dollars|Dollar|dollar|dollars
         dollarSet.add("Dollars");
@@ -160,49 +148,14 @@ public class Parse {
      * This function get a doc from the ReadFile class and parsing it line by line
      * @param docId
      * @param docText
-     * @param fileName
-     * @param counter - count 50 files
      */
-    public void parsing(String docId, String docText, String fileName, int counter){
-        // every 50 files, move all the data in the term map into indexer and reset the map
+    public void parsing(String docId, String docText, boolean isCorpus){
+        this.docId = docId;
+        // every 40 files, move all the data in the term map into indexer and reset the map
         numberOfDocuments++;
-        if (counter == 60) {
-            ReadFile.counter = 0;
-            moveToIndexer();
-            this.termsMap = new HashMap<>();
-        }
-        //values , key + value of DocumentsHashMap
-        DocumentDetails documentDetails = new DocumentDetails(docId,fileName);
-        //take only text between <Text> and </Text>
+        // break the text line by line
         BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.US);
-        //get the city name of the doc and adding it to the dictionary
-        String cityName = StringUtils.substringBetween(docText, "<f p=\"104\">\n ","</f> \n");
-        // get the language of the document and adding it to the corpusLanguage hash set
-        String language = StringUtils.substringBetween(docText, "<f p=\"105\">\n ","</f>");
-        String date = StringUtils.substringBetween(docText,"<data1>\n", "</date1>");
-        if (cityName != null){
-            cityName = cityName.trim();
-            int indexOfSpace = cityName.indexOf(" ");
-            if (indexOfSpace != -1)
-                cityName = cityName.substring(0,indexOfSpace);
-            documentDetails.setCityName(cityName);
-            updateTerm(cityName.toUpperCase(),documentDetails);
-            this.cityname = cityName.toUpperCase();
-        }
-        if (language != null){
-            language = language.trim();
-            int indexOfSpace = language.indexOf(" ");
-            if (indexOfSpace != -1)
-                language = language.substring(0,indexOfSpace);
-            int indexOfComma = language.indexOf(",");
-            if (indexOfComma != -1)
-                language = language.substring(0,indexOfComma);
-            corpusLanguages.add(language);
-            documentDetails.setLanguage(language);
-        }
-        if (date != null)
-            documentDetails.setDate(date);
-
+        // get the text between the tags <TEXT> </TEXT>
         Document document = Jsoup.parse(docText);
         String text = document.getElementsByTag("TEXT").text();
         iterator.setText(text);
@@ -211,27 +164,34 @@ public class Parse {
              end != BreakIterator.DONE;
              start = end, end = iterator.next()) {
             try{
-                parsingLine(text.substring(start,end),documentDetails);
+                parsingLine(text.substring(start,end));
             }
             catch (Exception e){ }
 
         }
-        documentDetails.setMaxTermFrequency(maxTermFrequency);
-        documentDetails.setNumberOfDistinctWords(numberOfDistinctWords);
+        if(isCorpus) {
+            // update and reset all the parameters of the current document
+            ReadFile.mapOfDocs.get(docId).setMaxTermFrequency(maxTermFrequency);
+            ReadFile.mapOfDocs.get(docId).setNumberOfDistinctWords(numberOfDistinctWords);
+            ////////CHANGED HERE
+            ReadFile.mapOfDocs.get(docId).setTopFiveEntities(topFiveEntities);
+            /////////////
+            indexer.setAll(docId, termsMapPerDocument, citiesMap);
+        }
         maxTermFrequency = 0;
         numberOfDistinctWords = 0;
-        this.cityname = null;
         this.position = -1;
-
+        termsMapPerDocument = new HashMap<>();
+        citiesMap = new HashMap<>();
+        topFiveEntities = new TreeMap<>();
     }
 
 
     /**
      * This function get a document line from the parsing() function, and parsing it.
      * @param docLine
-     * @param documentDetailes
      */
-    private void parsingLine(String docLine, DocumentDetails documentDetailes){
+    private void parsingLine(String docLine){
         String punctuations = ",.";
         //split all words by whitespace into array of words
         //docLine = docLine.replaceAll("[():?!]","");
@@ -259,9 +219,6 @@ public class Parse {
             if (wordsInDoc[i].length() == 0 || punctuations.contains(wordsInDoc[i]) || wordsInDoc[i].contains("--"))
                 continue;
 
-            if (stopWords.contains(wordsInDoc[i].toLowerCase()) && !wordsInDoc[i].equalsIgnoreCase("between") && !wordsInDoc[i].equals("may"))
-                continue;
-
             // if wordsInDoc[i] start with " or '
             if (wordsInDoc[i].startsWith("\"") || wordsInDoc[i].startsWith("'") || wordsInDoc[i].startsWith("/")) {
                 wordsInDoc[i] = wordsInDoc[i].substring(1);
@@ -286,50 +243,56 @@ public class Parse {
 
             // remove () if exist in the beginning and end of the word
             // like (WORD)
-            if (wordsInDoc[i].startsWith("("))
+            if (wordsInDoc[i].startsWith("(") || wordsInDoc[i].startsWith("["))
                 wordsInDoc[i] = wordsInDoc[i].substring(1);
-            if (wordsInDoc[i].endsWith(")"))
-                wordsInDoc[i] = wordsInDoc[i].substring(1,wordsInDoc[i].length() - 1);
+            if (wordsInDoc[i].endsWith(")") || wordsInDoc[i].endsWith("]") || wordsInDoc[i].endsWith(":"))
+                wordsInDoc[i] = wordsInDoc[i].substring(0,wordsInDoc[i].length() - 1);
+
+            if (ReadFile.stopWords.contains(wordsInDoc[i].toLowerCase()) && !wordsInDoc[i].equalsIgnoreCase("between") && !wordsInDoc[i].equals("may"))
+                continue;
 
 
-            if (wordsInDoc[i].equalsIgnoreCase(this.cityname))
-                documentDetailes.setPosition(position);
+
+            if (wordsInDoc[i].equalsIgnoreCase("moscow"))
+                numCounter++;
+
             // check if the string in wordInDoc[i] contains only letters
-            if (!monthDictionary.containsKey(wordsInDoc[i]) && !wordsInDoc.equals("between") && isAlpha(wordsInDoc[i])){
+            if (!monthDictionary.containsKey(wordsInDoc[i]) && !wordsInDoc[i].equals("between") && isWord(wordsInDoc[i])){
                 // the word doesn't exist in the dictionary starting with LOWER and UPPER
-                if (!termsMap.containsKey(wordsInDoc[i].toUpperCase()) && !termsMap.containsKey(wordsInDoc[i].toLowerCase())) {
+                if (!termsMapPerDocument.containsKey(wordsInDoc[i].toUpperCase()) && !termsMapPerDocument.containsKey(wordsInDoc[i].toLowerCase())) {
                     if (Character.isUpperCase(wordsInDoc[i].charAt(0)))
-                        updateTerm(wordsInDoc[i].toUpperCase(), documentDetailes);
+                        updateTerm(wordsInDoc[i].toUpperCase());
                     else
-                        updateTerm(wordsInDoc[i], documentDetailes);
+                        updateTerm(wordsInDoc[i]);
                     continue;
                 }
                 //WORD starts with UPPER and exist in dic with LOWER, update dic with LOWER CASE of WORD
-                if (Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(wordsInDoc[i].toLowerCase())) {
-                    updateTerm(wordsInDoc[i].toLowerCase(), documentDetailes);
+                if (Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMapPerDocument.containsKey(wordsInDoc[i].toLowerCase())) {
+                    updateTerm(wordsInDoc[i].toLowerCase());
                     continue;
                 }
 
                 //WORD starts with LOWER and exist in dic with UPPER, update dic with LOWER CASE of WORD and update key to LOWER
-                if (!Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMap.containsKey(wordsInDoc[i].toUpperCase())) {
-                    termsMap.get(wordsInDoc[i]).putAll(termsMap.get(wordsInDoc[i].toUpperCase()));
+                if (!Character.isUpperCase(wordsInDoc[i].charAt(0)) && termsMapPerDocument.containsKey(wordsInDoc[i].toUpperCase())) {
+                    updateTerm(wordsInDoc[i]);
+/*                    termsMapPerDocument.get(wordsInDoc[i]).putAll(termsMapPerDocument.get(wordsInDoc[i].toUpperCase()));
                     int currentNumOfAppearance = 0;
-                    if (termsMap.get(wordsInDoc[i]).containsKey(documentDetailes))
-                        currentNumOfAppearance = (termsMap.get(wordsInDoc[i])).get(documentDetailes);
+                    if (termsMapPerDocument.get(wordsInDoc[i]).containsKey(documentDetails))
+                        currentNumOfAppearance = (termsMapPerDocument.get(wordsInDoc[i])).get(documentDetails);
                     if (currentNumOfAppearance > maxTermFrequency)
                         maxTermFrequency = currentNumOfAppearance;
-                    (termsMap.get(wordsInDoc[i])).put(documentDetailes, currentNumOfAppearance + 1);
-                    termsMap.remove(wordsInDoc[i].toUpperCase());
+                    (termsMapPerDocument.get(wordsInDoc[i])).put(documentDetails, currentNumOfAppearance + 1);
+                    termsMapPerDocument.remove(wordsInDoc[i].toUpperCase());*/
                     continue;
                 }
 
                 // if starts with lower and doesnt exist in the dictionary with upper, insert the word to the dictionary in lower
                 if (Character.isLowerCase(wordsInDoc[i].charAt(0))){
-                    updateTerm(wordsInDoc[i],documentDetailes);
+                    updateTerm(wordsInDoc[i]);
                     continue;
                 }
                 //covers case of starts only with UPPER
-                updateTerm(wordsInDoc[i].toUpperCase(), documentDetailes);
+                updateTerm(wordsInDoc[i].toUpperCase());
                 continue;
 
             }
@@ -364,7 +327,7 @@ public class Parse {
                         StringBuilder term2 = parseNumbers(false, numberTerm, fraction);
                         numberTerm.clear();
                         term1.append("-" + term2);
-                        updateTerm(term1.toString(), documentDetailes);
+                        updateTerm(term1.toString());
                         i = advanceI;
                         continue;
                     }
@@ -385,7 +348,7 @@ public class Parse {
                         StringBuilder term2 = parseNumbers(false, numberTerm, fraction);
                         numberTerm.clear();
                         term1.append("-" + term2);
-                        updateTerm(term1.toString(), documentDetailes);
+                        updateTerm(term1.toString());
                         i = advanceI;
                         continue;
                     }
@@ -393,15 +356,15 @@ public class Parse {
 
                 //first Month Name then Number
                 if (monthDictionary.containsKey(wordsInDoc[i])) {
-                    //insert to dic also Month name by itself
-                    updateTerm(wordsInDoc[i], documentDetailes);
+                    //insert to dic also Month countryName by itself
+                    updateTerm(wordsInDoc[i]);
                     if (i + 1 < wordsInDoc.length && isPair) {
                         wordsInDoc[i + 1] = removeLastComma(wordsInDoc[i + 1]);
                         if (i + 1 < wordsInDoc.length && isInteger(wordsInDoc[i + 1],true)) {
                             //change to date format: MM-DD and insert to dic
                             StringBuilder date = convertToDateFormat(wordsInDoc[i], wordsInDoc[i + 1]);
                             if (date != null)
-                                updateTerm(date.toString(), documentDetailes);
+                                updateTerm(date.toString());
                             i = i + 1;
                             continue;
                         }
@@ -411,12 +374,12 @@ public class Parse {
                 if (i + 1 < wordsInDoc.length && isInteger(wordsInDoc[i],true)) {
                     wordsInDoc[i + 1] = wordsInDoc[i + 1].replaceAll(",", "");
                     if (monthDictionary.containsKey(wordsInDoc[i + 1])) {
-                        //insert to dic month name alone
-                        updateTerm(wordsInDoc[i + 1], documentDetailes);
+                        //insert to dic month countryName alone
+                        updateTerm(wordsInDoc[i + 1]);
                         //change date like 14 May to 05-14
                         StringBuilder date = convertToDateFormat(wordsInDoc[i + 1], wordsInDoc[i]);
                         if (date != null)
-                            updateTerm(date.toString(), documentDetailes);
+                            updateTerm(date.toString());
                         i = i + 1;
                         continue;
                     }
@@ -449,17 +412,17 @@ public class Parse {
                                         StringBuilder term2 = parseNumbers(false, numberTerm, wordsInDoc[i + 2].contains("/"));
                                         numberTerm.clear();
                                         term1.append("-" + term2.toString());
-                                        updateTerm(term1.toString(), documentDetailes);
+                                        updateTerm(term1.toString());
                                         advanceI = advanceI + 1;
                                     } else {
                                         StringBuilder afterMN = parseNumbers(false, numberTerm, false);
                                         term1.append("-" + afterMN);
-                                        updateTerm(term1.toString(), documentDetailes);
+                                        updateTerm(term1.toString());
                                     }
 
                                 } else {
                                     term1.append("-" + afterMakaf);
-                                    updateTerm(term1.toString(), documentDetailes);
+                                    updateTerm(term1.toString());
                                 }
                                 i = advanceI;
                                 continue;
@@ -486,11 +449,11 @@ public class Parse {
                     //$price million/billion/trillion
                     if (i + 1 < wordsInDoc.length && isDollar && pricesDictionary.containsKey(wordsInDoc[i + 1])) {
                         numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
-                        updateTerm(wordsInDoc[i + 1].toLowerCase(), documentDetailes);
+                        updateTerm(wordsInDoc[i + 1].toLowerCase());
                         //call to func which deal with prices
                         StringBuilder finalTerm = parseNumbers(true, numberTerm, twoNumsCells);
                         numberTerm.clear();
-                        updateTerm(finalTerm.toString(), documentDetailes);
+                        updateTerm(finalTerm.toString());
                         i = i + 1;
                         continue;
                     }
@@ -499,7 +462,7 @@ public class Parse {
                     if (isDollar) {
                         //call to func which deal with prices
                         StringBuilder finalTerm = parseNumbers(true, numberTerm, twoNumsCells);
-                        updateTerm(finalTerm.toString(), documentDetailes);
+                        updateTerm(finalTerm.toString());
                         numberTerm.clear();
                         continue;
                     }
@@ -509,11 +472,11 @@ public class Parse {
                         numberTerm.add(numTerm);
                         numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
                         //update dic with Dollars/Dollar/dollar/dollars
-                        updateTerm(wordsInDoc[i + 1].toLowerCase(), documentDetailes);
+                        updateTerm(wordsInDoc[i + 1].toLowerCase());
                         //call to func which deal with prices
                         StringBuilder finalTerm = parseNumbers(true, numberTerm, twoNumsCells);
                         numberTerm.clear();
-                        updateTerm(finalTerm.toString(), documentDetailes);
+                        updateTerm(finalTerm.toString());
                         i = i + 1;
                         continue;
                     }
@@ -525,7 +488,7 @@ public class Parse {
                         //call to func which deal with numbers
                         StringBuilder finalTerm = parseNumbers(false, numberTerm, twoNumsCells);
                         numberTerm.clear();
-                        updateTerm(finalTerm.toString(), documentDetailes);
+                        updateTerm(finalTerm.toString());
                         i = i + 1;
                         continue;
                     }
@@ -536,11 +499,11 @@ public class Parse {
                             numberTerm.add(numTerm);
                             numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
                             //update dic with Dollars/Dollar/dollar/dollars
-                            updateTerm(wordsInDoc[i + 1], documentDetailes);
+                            updateTerm(wordsInDoc[i + 1]);
                             //call to func which deal with prices
                             StringBuilder finalTerm = parseNumbers(true, numberTerm, twoNumsCells);
                             numberTerm.clear();
-                            updateTerm(finalTerm.toString(), documentDetailes);
+                            updateTerm(finalTerm.toString());
                             i = i + 2;
                             continue;
                         }
@@ -555,7 +518,7 @@ public class Parse {
                             //call to func which deal with numbers
                             StringBuilder finalTerm = parseNumbers(false, numberTerm, twoNumsCells);
                             numberTerm.clear();
-                            updateTerm(finalTerm.toString(), documentDetailes);
+                            updateTerm(finalTerm.toString());
                             i = i + 2;
                             continue;
                         }
@@ -566,11 +529,11 @@ public class Parse {
                         numberTerm.add(numTerm);
                         numberTerm.add(new StringBuilder(wordsInDoc[i + 1]));
                         //update dic with Dollars/Dollar/dollar/dollars
-                        updateTerm(wordsInDoc[i + 1], documentDetailes);
+                        updateTerm(wordsInDoc[i + 1]);
                         //call to func which deal with prices
                         StringBuilder finalTerm = parseNumbers(true, numberTerm, twoNumsCells);
                         numberTerm.clear();
-                        updateTerm(finalTerm.toString(), documentDetailes);
+                        updateTerm(finalTerm.toString());
                         i = i + 3;
                         continue;
 
@@ -586,7 +549,7 @@ public class Parse {
                     //if ends with '%'
                     if (wordsInDoc[cellNum].charAt(wordsInDoc[cellNum].length() - 1) == '%') {
                         String numTermStr = numTerm.toString();
-                        updateTerm(numTermStr, documentDetailes);
+                        updateTerm(numTermStr);
                         if (twoNumsCells)
                             i = i + 1;
                         continue;
@@ -598,8 +561,8 @@ public class Parse {
                             i = i + 1;
                         }
                         numTerm.append("%");
-                        updateTerm(numTerm.toString(), documentDetailes);
-                        updateTerm(wordsInDoc[cellNum + 1], documentDetailes);
+                        updateTerm(numTerm.toString());
+                        updateTerm(wordsInDoc[cellNum + 1]);
 
                         i = i + 1;
                         continue;
@@ -611,7 +574,7 @@ public class Parse {
                     }
                     StringBuilder finalTerm = parseNumbers(false, numberTerm, twoNumsCells);
                     numberTerm.clear();
-                    updateTerm(finalTerm.toString(), documentDetailes);
+                    updateTerm(finalTerm.toString());
                     if (twoNumsCells)
                         i = i + 1;
                     continue;
@@ -621,7 +584,7 @@ public class Parse {
                 int indxMakaf = wordsInDoc[i].indexOf('-');
                 if (indxMakaf > 0 && !StringUtils.isNumeric(wordsInDoc[i])) {
                     if (!StringUtils.isNumeric(wordsInDoc[i].substring(indxMakaf + 1))) {
-                        updateTerm(wordsInDoc[i], documentDetailes);
+                        updateTerm(wordsInDoc[i]);
                         continue;
                     }
                 }
@@ -647,13 +610,13 @@ public class Parse {
                             StringBuilder term2 = parseNumbers(false, numberTerm, twoNumsCells);
                             term1.append("-" + term2);
                             numberTerm.clear();
-                            updateTerm(term1.toString(), documentDetailes);
+                            updateTerm(term1.toString());
                             continue;
                         }
                         //number-word like 2-girls
                         else {
                             term1.append("-" + afterMakaf);
-                            updateTerm(term1.toString(), documentDetailes);
+                            updateTerm(term1.toString());
                             continue;
                         }
                     }
@@ -673,7 +636,7 @@ public class Parse {
 
     /**
      * gets date like: May 15 , Jun 1994 convert to: 05-15 , 1994-01
-     * @param monthName variations of month name
+     * @param monthName variations of month countryName
      * @param number
      * @return date in format: num-num
      */
@@ -706,7 +669,7 @@ public class Parse {
      * @param numberTerm - vector which contains words after split
      * @param twoNumsCells - if the number is : number fraction
      */
-    private StringBuilder parseNumbers(boolean isPrice, Vector<StringBuilder> numberTerm, boolean twoNumsCells ){
+    private StringBuilder parseNumbers(boolean isPrice, Vector<StringBuilder> numberTerm, boolean twoNumsCells){
         int priceTermSize = numberTerm.size();
         StringBuilder finalTerm =  new StringBuilder();
         while(true) {
@@ -720,8 +683,9 @@ public class Parse {
                 }
                 else{
                     // number million
-                    if(numbersDictionary.containsKey(key))
+                    if(numbersDictionary.containsKey(key)) {
                         finalTerm.append(numberTerm.elementAt(0)).append(numbersDictionary.get(numberTerm.elementAt(1).toString()));
+                    }
                     //number kilogram
                     else if (weightDictionary.containsKey(key) && priceTermSize == 2)
                         finalTerm.append(numberTerm.elementAt(0)).append(weightDictionary.get(numberTerm.elementAt(1).toString()));
@@ -736,10 +700,12 @@ public class Parse {
             else if(twoNumsCells){
                 if(isPrice)
                     finalTerm.append(numberTerm.elementAt(0)).append(" " + numberTerm.elementAt(1)).append(" Dollars");
-                else
+                else {
                     finalTerm.append(numberTerm.elementAt(0)).append(" " + numberTerm.elementAt(1));
-                if (priceTermSize == 3)
+                }
+                if (priceTermSize == 3) {
                     finalTerm.append(weightDictionary.get(numberTerm.elementAt(2).toString()));
+                }
                 break;
             }
 
@@ -749,22 +715,32 @@ public class Parse {
             //handle decimal fraction
             int dotIndex = tmpNum.indexOf('.');
             //1.5 11.5 111.5
-            if(dotIndex!=-1 && dotIndex<4)
+            if(dotIndex!=-1 && dotIndex<4) {
                 return new StringBuilder(tmpNum);
+            }
 
             //if smaller than million
-            if (!isPrice && tmpNum.length() < 5){
+/*            if (!isPrice && tmpNum.length() < 5){
                 finalTerm.append(numberTerm.elementAt(0));
-                if (priceTermSize == 2)
+                if (priceTermSize == 2) {
                     finalTerm.append(weightDictionary.get(numberTerm.elementAt(1).toString()));
+                }
 
                 break;
-            }
-            if (tmpNum.length() < 7) {
+            }*/
+            if (tmpNum.length() < 7 || dotIndex == 4) {
                 if(isPrice)
                     finalTerm.append(numberTerm.elementAt(0)).append(" Dollars");
                 else{
                     dotIndex = tmpNum.indexOf(".");
+                    if (dotIndex == 4){
+                        tmpNum = tmpNum.replaceAll("\\.","");
+                        finalTerm.append(tmpNum);
+                        finalTerm.insert(dotIndex-3,".");
+                        finalTerm = allCharactersZero(finalTerm);
+                        finalTerm.append("K");
+                        break;
+                    }
                     if (tmpNum.contains(".") && dotIndex < 5){
                         finalTerm.append(tmpNum);
                     }
@@ -778,8 +754,9 @@ public class Parse {
                         finalTerm = allCharactersZero(finalTerm);
                         finalTerm.append("K");
                     }
-                    if (priceTermSize == 2)
+                    if (priceTermSize == 2) {
                         finalTerm.append(weightDictionary.get(numberTerm.elementAt(1).toString()));
+                    }
                 }
                 break;
             }
@@ -807,8 +784,9 @@ public class Parse {
                         finalTerm = allCharactersZero(finalTerm);
                         finalTerm.append("B");
                     }
-                    if (priceTermSize == 2)
+                    if (priceTermSize == 2) {
                         finalTerm.append(weightDictionary.get(numberTerm.elementAt(1).toString()));
+                    }
                 }
                 break;
             }
@@ -828,108 +806,25 @@ public class Parse {
             else
                 str = str.delete(i,str.length());
         }
+        str.delete(str.indexOf(".") + 3,str.length());
         return str;
     }
 
     /**
      *
      * @param name
-     * @return
+     * @return true is countryName contains only letters or the chars ' :
      */
-    public boolean isAlpha(String name) {
+    private boolean isWord(String name) {
         char[] chars = name.toCharArray();
 
         for (char c : chars) {
+            if (c == '\'' || c == ':') continue;
             if(!Character.isLetter(c)) {
                 return false;
             }
         }
         return true;
-    }
-    /**
-     * if the word ends with comma, returns the word without the comma
-     * else returns the word
-     * for example:word= 1,000,000, returns: 1,000,000
-     * @param word
-     * @return
-     */
-    private String removeLastComma(String word){
-        if(word.endsWith(",")) {
-            word= word.substring(0,word.length()-1);
-        }
-        return word;
-    }
-
-    /**
-     * This function split the given line by the given delimiter
-     * @param line
-     * @param delimiter
-     * @return
-     */
-    public String[] splitByDelimiter( String line, char delimiter) {
-        if(line.equals(" ")) {
-            String[] result = {""};
-            return result;
-        }
-        line = line.replaceAll("['()\":&!?+*^#@]","");
-        CharSequence[] temp = new CharSequence[(line.length() / 2) + 1];
-        int wordCount = 0;
-        int i = 0;
-        int j = line.indexOf(delimiter, 0); // first substring
-
-        while (j >= 0) {
-            String word = line.substring(i,j);
-            word = word.trim();
-            temp[wordCount++] = word;
-            i = j + 1;
-            j = line.indexOf(delimiter, i); // rest of substrings
-        }
-
-        temp[wordCount++] = line.substring(i); // last substring
-
-
-
-
-        String[] result = new String[wordCount];
-        System.arraycopy(temp, 0, result, 0, wordCount);
-
-        return result;
-    }
-
-
-    /**
-     * create term if not exist, update the dictionary of docs
-     * @param key - the name of city under tag <F P=104>
-     * @param documentDetails - name of document where tag is under, name of file where doc is under
-     */
-    private void updateTerm(String key, DocumentDetails documentDetails){
-        //check if term not exist in dictionary , add key to TreeMapDic and create it's dic of docs
-        if(!termsMap.containsKey(key)){
-            HashMap<DocumentDetails,Integer> documentsHashMap = new HashMap<>();
-            documentsHashMap.put(documentDetails, 1);
-            termsMap.put(key,documentsHashMap);
-            numberOfDistinctWords++;
-            // if the key is city name, save the position of the key in the file
-            //key exist , update value.
-        } else {
-            int currentNumOfAppearance = 0;
-            if (termsMap.get(key).containsKey(documentDetails))
-                currentNumOfAppearance = (termsMap.get(key)).get(documentDetails);
-            (termsMap.get(key)).put(documentDetails,currentNumOfAppearance+1);
-            // if the key is city name, save the position of the key in the file
-            // find the max frequency in each doc
-            if (currentNumOfAppearance > maxTermFrequency)
-                maxTermFrequency = currentNumOfAppearance;
-
-        }
-    }
-
-    /**
-     *
-     * @return the termsMap dictionary
-     */
-    public HashMap<String, HashMap<DocumentDetails,Integer>> getTermsMap() {
-        return termsMap;
     }
 
     /**
@@ -941,7 +836,7 @@ public class Parse {
      * @param isDate
      * @return
      */
-    public boolean isInteger(String str, boolean isDate) {
+    private boolean isInteger(String str, boolean isDate) {
         boolean ans = false;
         int counter = 0;
         if (str == null) {
@@ -993,66 +888,159 @@ public class Parse {
         }
         return ans;
     }
-
     /**
-     *
-     * @return the language array list sorted
+     * if the word ends with comma, returns the word without the comma
+     * else returns the word
+     * for example:word= 1,000,000, returns: 1,000,000
+     * @param word
+     * @return
      */
-    public TreeSet<String> getCorpusLanguages() {
-        return corpusLanguages;
+    private String removeLastComma(String word){
+        if(word.endsWith(",")) {
+            word= word.substring(0,word.length()-1);
+        }
+        return word;
     }
 
     /**
-     * This function send the terms map dictionary to the Indexer object for continuous progress
+     * This function split the given line by the given delimiter
+     * @param line
+     * @param delimiter
+     * @return
      */
-    public synchronized void moveToIndexer() {
-        // if needed to do stem
-        if (isStemming) {
-            stemmer.stemMap(this.termsMap);
+    private String[] splitByDelimiter( String line, char delimiter) {
+        if(line.equals(" ")) {
+            String[] result = {""};
+            return result;
         }
-/*//        threadPoolExecutor.execute(new RunnableBuildIndex());
-        if (this.thread != null) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        line = line.replaceAll("[\"&!;?+*|^#@]","");
+        CharSequence[] temp = new CharSequence[(line.length() / 2) + 1];
+        int wordCount = 0;
+        int i = 0;
+        int j = line.indexOf(delimiter, 0); // first substring
+
+        while (j >= 0) {
+            String word = line.substring(i,j);
+            word = word.trim();
+            temp[wordCount++] = word;
+            i = j + 1;
+            j = line.indexOf(delimiter, i); // rest of substrings
+        }
+
+        temp[wordCount++] = line.substring(i); // last substring
+
+
+
+
+        String[] result = new String[wordCount];
+        System.arraycopy(temp, 0, result, 0, wordCount);
+
+        return result;
+    }
+
+
+    /**
+     * create term if not exist, update the dictionary of docs
+     * @param key - the countryName of city under tag <F P=104>
+     */
+    private void updateTerm(String key){
+        if (isStemming)
+            key = stemmer.setTerm(key);
+        //check if term not exist in dictionary , add key to TreeMapDic and create it's dic of docs
+        if(!termsMapPerDocument.containsKey(key)){
+            termsMapPerDocument.put(key,1);
+            numberOfDistinctWords = numberOfDistinctWords + 1;
+            // if the key is city countryName, save the position of the key in the file
+            //key exist , update value.
+        } else {
+            int currentNumOfAppearance = termsMapPerDocument.get(key);
+            termsMapPerDocument.put(key,currentNumOfAppearance + 1);
+            // find the max frequency in each doc
+            if (currentNumOfAppearance + 1 > maxTermFrequency)
+                maxTermFrequency = currentNumOfAppearance;
+        }
+        if (ReadFile.cities.contains(key.toUpperCase())) {
+            if (!citiesMap.containsKey(key.toUpperCase())) {
+                ArrayList<Integer> listOfPositions = new ArrayList<>();
+                listOfPositions.add(position);
+                citiesMap.put(key.toUpperCase(), listOfPositions);
+            } else {
+                citiesMap.get(key.toUpperCase()).add(position);
             }
         }
-         this.thread = new Thread(new RunnableBuildIndex());
-        this.thread.start();*/
-        indexer.buildIndex(termsMap);
+        if (Character.isUpperCase(key.charAt(0)))
+            setTopFiveEntities(key,termsMapPerDocument.get(key));
+    }
 
+    /**
+     * This method save the top five terms which appear in upper case and their tf
+     * @param term
+     * @param tf
+     */
+    private void setTopFiveEntities(String term,int tf) {
+        if (topFiveEntities.size() <= 5)
+            topFiveEntities.put(tf,term);
+        if (tf < topFiveEntities.lastKey())
+            return;
+        else{
+            int needToDelete = 0;
+            for(Map.Entry<Integer,String> entry : topFiveEntities.entrySet()){
+                // if the new tf is bigger from one of the keys in the topFiveEntities dictionary
+                if (entry.getKey() < tf){
+                    needToDelete = entry.getKey();
+                }
+            }
+            topFiveEntities.remove(needToDelete);
+            topFiveEntities.put(tf,term);
+        }
+    }
+
+
+    /**
+     * This function sends  the remaining dictionary to indexer and than call the create inverted file in indexer object
+     */
+    public void notifyDone() throws InterruptedException {
+        //createCityIndex();
+        //indexer.buildIndex(termsMapPerDocument);
+        indexer.writeDataToDisk();
+        indexer.createInvertedIndex();
+    }
+
+
+    //<editor-fold desc="Getters">
+    /**
+     *
+     * @return the termsMapPerDocument dictionary
+     */
+    public HashMap<String, Integer> getTermsMapPerDocument() {
+        return termsMapPerDocument;
     }
 
     /**
      *
-     * @return
+     * @return the corpus languages field
+     */
+    public TreeSet<String> getCorpusLanguages() {
+        return ReadFile.corpusLanguages;
+    }
+
+
+    /**
+     *
+     * @return the indexer object
      */
     public Indexer getIndexer() {
         return indexer;
     }
 
+    /**
+     *
+     * @return the number of document has been parsed.
+     */
     public int getNumberOfDocuments() {
         return numberOfDocuments;
     }
-
-
-    /**
-     *
-     */
-    public void notifyDone() {
-        moveToIndexer();
-        indexer.mergePostingFile();
-    }
-
-/*    private class RunnableBuildIndex implements Runnable{
-
-        @Override
-        public void run() {
-            ConcurrentHashMap <String, ConcurrentHashMap<DocumentDetails,Integer>> terms = new ConcurrentHashMap<>(termsMap);
-            indexer.buildIndex(terms);
-        }
-    }*/
+    //</editor-fold>
 
 }
 

@@ -1,53 +1,46 @@
-package FilesOperation;
+package Model;
 
-import java.util.ArrayList;
+import java.util.TreeMap;
 
 /**
  * This class saves all the details of each document in the corpus
  */
 public class DocumentDetails {
 
-    String docId;
     String fileName;
-    String cityName;
     String language;
     String date;
-    int termFrequency;
     int maxTermFrequency;
     int numberOfDistinctWords;
-    ArrayList<Integer> listOfPositions;
+    TreeMap<Integer,String> topFiveEntities;
+
+
 
     /**
      * Constructor
-     * @param docId
+     * @param date
      * @param fileName
      */
-    public DocumentDetails(String docId, String fileName) {
-        this.docId = docId;
+    public DocumentDetails(String fileName,String date, String language) {
         this.fileName = fileName;
-        this.listOfPositions = new ArrayList<>();
+        this.date = date;
+        this.language = language;
     }
 
 
     //<editor-fold desc="Getters">
-    public String getDocId() {
-        return docId;
-    }
 
     public String getFileName() {
         return fileName;
     }
 
-    public String getCityName() {
-        return cityName;
-    }
 
     public String getLanguage() {
         return language;
     }
 
-    public int getTermFrequency() {
-        return termFrequency;
+    public String getDate() {
+        return date;
     }
 
     public int getMaxTermFrequency() {
@@ -58,33 +51,19 @@ public class DocumentDetails {
         return numberOfDistinctWords;
     }
 
-    public ArrayList<Integer> getListOfPositions() {
-        return listOfPositions;
+    public TreeMap<Integer, String> getTopFiveEntities() {
+        return topFiveEntities;
     }
-
     //</editor-fold>
 
 
     //<editor-fold desc="Setters">
-    public void setDocId(String docId) {
-        this.docId = docId;
-    }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public void setCityName(String cityName) {
-        this.cityName = cityName;
-    }
 
     public void setLanguage(String language) {
         this.language = language;
     }
 
-    public void setTermFrequency(int termFrequency) {
-        this.termFrequency = termFrequency;
-    }
 
     public void setMaxTermFrequency(int maxTermFrequency) {
         this.maxTermFrequency = maxTermFrequency;
@@ -94,13 +73,8 @@ public class DocumentDetails {
         this.numberOfDistinctWords = numberOfDistinctWords;
     }
 
-    public void setPosition (int position){
-        this.listOfPositions.add(position);
+    public void setTopFiveEntities(TreeMap<Integer, String> topFiveEntities) {
+        this.topFiveEntities = topFiveEntities;
     }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
-
     //</editor-fold>
 }

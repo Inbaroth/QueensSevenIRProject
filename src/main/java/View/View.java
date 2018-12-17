@@ -18,6 +18,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Optional;
 
+
 public class View implements Observer {
     private Controller controller;
     private Stage primaryStage;
@@ -34,11 +35,19 @@ public class View implements Observer {
         this.primaryStage = primaryStage;
     }
 
+    /**
+     * opens the main operations window
+     * @param actionEvent - pressing "Start" button
+     */
     public void Start(ActionEvent actionEvent) {
         newStage("OperatingWindow.fxml", "", operatingWindow, 670, 490, controller);
     }
 
-
+    /**
+     * handle mouseClick on the close window button
+     * shows an alert asking the user if he really want to close, if yes, closing the window
+     * @param primaryStage - the stage being closed
+     */
     protected void SetStageCloseEvent(Stage primaryStage) {
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             public void handle(WindowEvent windowEvent) {
@@ -61,20 +70,25 @@ public class View implements Observer {
             }
         });
     }
-    //create a new stage
+
+    /**
+     * creates a new window, based on given details and shows it
+     * @param fxmlName - name of the stage fxml file
+     * @param title - title of the window
+     * @param windowName - name of the java class represents the stage
+     * @param width of window
+     * @param height of window
+     * @param controller - controller of the program, link between the view and model
+     */
     protected void newStage(String fxmlName,String title, View windowName, int width, int height, Controller controller){
-        /*FXMLLoader fxmlLoader = new
-                FXMLLoader(getClass().getResource(fxmlName));*/
         FXMLLoader fxmlLoader = new FXMLLoader();
         Parent root = null;
         try {
             root = fxmlLoader.load(getClass().getResource("/" + fxmlName).openStream());
-            //root = (Parent) fxmlLoader.load(getClass().getResource(fxmlName).openStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
         Stage stage = new Stage();
-        //set what you want on your scene
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setTitle(title);
         Scene scene = new Scene(root, width, height);
@@ -87,12 +101,17 @@ public class View implements Observer {
         controller.addObserver(windowName);
     }
 
-
+    /**
+     * creates an alert, the type is on request
+     * @param messageText the massage being shown in the alert
+     * @param alertType -Alert.AlertType (Information, Confirmation... )
+     */
     protected void alert(String messageText, Alert.AlertType alertType){
         Alert alert = new Alert(alertType);
         alert.setContentText(messageText);
         alert.showAndWait();
         alert.close();
+
     }
 
 }

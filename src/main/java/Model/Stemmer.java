@@ -1,10 +1,5 @@
-package FilesOperation;
+package Model;
 
-import java.io.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Stemmer, implementing the Porter Stemming Algorithm
@@ -30,44 +25,17 @@ public class Stemmer {
 
     /**
      *
-     * @param termsMap
-     * @return
-     */
-    public void stemMap(HashMap<String, HashMap<DocumentDetails,Integer>> termsMap){
-        Iterator it = termsMap.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            String key = (String) entry.getKey();
-            // stem the key using porter stemmer algorithm
-            setTerm(key);
-            stem();
-            String stem = getTerm();
-            // if the stem of key exist in the terms dictionary, merge the key values to stem, and remove key from dictionary
-            if (!key.equals(stem)){
-                if (termsMap.containsKey(stem)) {
-                    termsMap.get(stem).putAll(termsMap.get(key));
-                }
-                else if (!termsMap.containsKey(stem)){
-                    termsMap.put(stem,termsMap.get(key));
-                }
-                it.remove();
-            }
-        }
-    }
-
-    /**
-     *
-     * @return
+     * @return the word after stemming
      */
     private String getTerm() {
         return String.copyValueOf(b,0,i_end);
     }
 
     /**
-     *
+     * This method initial the word and start with stemming
      * @param word
      */
-    private void setTerm(String word) {
+    public String setTerm(String word) {
         i = word.length();
         char[] new_b = new char[i];
         for (int c = 0; c < i; c++)
@@ -75,37 +43,11 @@ public class Stemmer {
 
         b = new_b;
 
+        stem();
+        return getTerm();
+
     }
 
-    /**
-     * Add a character to the word being stemmed.  When you are finished
-     * adding characters, you can call stem(void) to stem the word.
-     */
-
-    public void add(char ch){
-        if (i == b.length){
-            char[] new_b = new char[i+INC];
-            for (int c = 0; c < i; c++)
-                new_b[c] = b[c];
-            b = new_b;
-        }
-        b[i++] = ch;
-    }
-
-
-    /** Adds wLen characters to the word being stemmed contained in a portion
-     * of a char[] array. This is like repeated calls of add(char ch), but
-     * faster.
-     */
-
-    public void add(char[] w, int wLen){
-        if (i+wLen >= b.length){
-            char[] new_b = new char[i+wLen+INC];
-            for (int c = 0; c < i; c++) new_b[c] = b[c];
-            b = new_b;
-        }
-        for (int c = 0; c < wLen; c++) b[i++] = w[c];
-    }
 
     /**
      * After a word has been stemmed, it can be retrieved by toString(),
@@ -114,17 +56,6 @@ public class Stemmer {
      */
     public String toString() { return new String(b,0,i_end); }
 
-    /**
-     * Returns the length of the word resulting from the stemming process.
-     */
-    public int getResultLength() { return i_end; }
-
-    /**
-     * Returns a reference to a character buffer containing the results of
-     * the stemming process.  You also need to consult getResultLength()
-     * to determine the length of the result.
-     */
-    public char[] getResultBuffer() { return b; }
 
     /* cons(i) is true <=> b[i] is a consonant. */
 
